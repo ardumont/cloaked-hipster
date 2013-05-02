@@ -9,7 +9,7 @@
 ;; [0 0 0 0 0 1 1 1] reads 7
 
 (defn comp-before
-  "Complement a bit sequence to n bits (if necessary) - the bits are added by the most significant side (so by the head)."
+  "Complement by the most significant side (head) a bit sequence to n bits (if necessary)."
   [n b]
   (->> (iterate (partial concat [0]) b)
        (drop-while #(not= n (count %)))
@@ -20,6 +20,19 @@
   (comp-before 8 [0 0 0 0 1 0 0 0])  => [0 0 0 0 1 0 0 0]
   (comp-before 4 [1 1 1])            => [0 1 1 1]
   (comp-before 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 0 0 1 0 0 0])
+
+(defn comp-after
+  "Complement by the least significant side (tail) a bit sequence to n bits (if necessary)."
+  [n b]
+  (->> (iterate #(concat % [0]) b)
+       (drop-while #(not= n (count %)))
+       first))
+
+(fact
+  (comp-after 8 [1 1 1])            => [1 1 1 0 0 0 0 0]
+  (comp-after 8 [0 0 0 0 1 0 0 0])  => [0 0 0 0 1 0 0 0]
+  (comp-after 4 [1 1 1])            => [1 1 1 0]
+  (comp-after 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 1 0 0 0 0 0])
 
 (defn- to-bin
   "Convert a number into binary sequence"
