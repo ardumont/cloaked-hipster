@@ -98,18 +98,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; decoding
 
-(defn- nb-chars-to-decode
-  "A dispatch function on the count of = char (which is a complement character) on the last 2 characters from the list of characters"
-  [[_ _ c d]]
-  (cond (and (= c \=) (= d \=)) 2
-        (= d \=)                1
-        :else                   0))
-
-(fact
-  (nb-chars-to-decode "ab==") => 2
-  (nb-chars-to-decode "abc=") => 1
-  (nb-chars-to-decode "abcd") => 0)
-
 (def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
   (comp b/to-6bits d/base64-dec))
 
@@ -120,10 +108,9 @@
 (defn decode4
   "Decode 4 characters into 3 bytes (24 bits)"
   [s]
-  (let [nb-chars-to-dec (- 4 (nb-chars-to-decode s))]
-    (->> s
-         (take nb-chars-to-dec)
-         (mapcat decode-b64char))))
+  (->> s
+       (take-while #(not= \= %))
+       (mapcat decode-b64char)))
 
 (fact
   (decode4 "ab==") => [0 1 1 0 1 0,
