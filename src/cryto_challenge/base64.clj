@@ -84,10 +84,10 @@
 (defn encode
   "Encode into base64"
   [s]
-  (->> (partition-all 3 s)       ;; 3-words chunks (24 bits)
-       (mapcat to-bits)          ;; transform into 8-bits words all concatenated
-       (partition-all 24)        ;; 24-bits chunks
-       (mapcat to-base64)        ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
+  (->> s
+       to-bits             ;; Transform all chars into 8-bits sequence
+       (partition-all 24)  ;; 24-bits chunks
+       (mapcat to-base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
        (s/join "")))
 
 (fact
