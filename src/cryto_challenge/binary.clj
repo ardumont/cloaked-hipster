@@ -69,12 +69,12 @@
   ((to-binary 8) 97) => [0 1 1 0 0 0 0 1]
   ((to-binary 8) 2)  => [0 0 0 0 0 0 1 0])
 
-(def to-bin ^{:doc "Given a number, compute its 8-bits representation."}
+(def to-8bits ^{:doc "Given a number, compute its 8-bits representation."}
   (to-binary 8))
 
 (fact
-  (to-bin 97) => [0 1 1 0 0 0 0 1]
-  (to-bin 2)  => [0 0 0 0 0 0 1 0])
+  (to-8bits 97) => [0 1 1 0 0 0 0 1]
+  (to-8bits 2)  => [0 0 0 0 0 0 1 0])
 
 (def to-6bits ^{:doc "Given a number, compute its 6-bits representation."}
   (to-binary 6))

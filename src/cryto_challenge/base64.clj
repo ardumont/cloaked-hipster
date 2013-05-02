@@ -2,7 +2,10 @@
   "A namespace to try and learn to encrypt from string to base64"
   (:use [midje.sweet :only [fact future-fact]])
   (:require [crypto-challenge.dico   :as d]
-            [crypto-challenge.binary :as b]))
+            [crypto-challenge.binary :as b]
+            [clojure.string          :as s]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; encoding
 
 ;; Given a partition of 24 bits, compute the complement [partition of multiple 6 bits, list of complement = char]
 (defmulti comp24 count)
@@ -30,9 +33,21 @@
   (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]
                                                                  []])
 
+(def char2bits ^{:doc "Convert a char into a 8-bits sequence"}
+  (comp b/to-8bits int))
+
+(fact
+  (char2bits \a) => [0 1 1 0 0 0 0 1])
+
+(def bits2char ^{:doc "Convert a 8-bits sequence into a char"}
+  (comp char b/to-num))
+
+(fact
+  (bits2char [0 1 1 0 0 0 0 1]) => \a)
+
 (def to-bits ^{:private true
                :doc "Transform a string into a list of bits."}
-  (partial mapcat (comp b/to-bin int)))
+  (partial mapcat char2bits))
 
 (fact
   (to-bits [\a \b \c]) => [0 1 1 0 0 0 0 1 0 1 1 0 0 0 1 0 0 1 1 0 0 0 1 1]
@@ -53,14 +68,78 @@
   (to-base64 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]) => [\/ \w \P \/])
 
 (defn encode
-  "ascii to base64"
+  "Encode into base64"
   [s]
   (->> (partition-all 3 s)       ;; 3-words chunks (24 bits)
        (mapcat to-bits)          ;; transform into 8-bits words all concatenated
        (partition-all 24)        ;; 24-bits chunks
        (mapcat to-base64)        ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
-       (clojure.string/join "")))
+       (s/join "")))
 
 (fact
   (encode "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
   => "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; decoding
+
+(defn- dispatch-on-count-=
+  "A dispatch function on the count of = char (which is a complement character) on the last 2 characters from the list of characters"
+  [[_ _ c d]]
+  (cond (and (= c \=) (= d \=)) 2
+        (= d \=)                1
+        :else                   0))
+
+(fact
+  (dispatch-on-count-= "ab==") => 2
+  (dispatch-on-count-= "abc=") => 1
+  (dispatch-on-count-= "abcd") => 0)
+
+(def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
+  (comp b/to-6bits d/base64-dec))
+
+(fact
+  (decode-1-char \a) => [0 1 1 0 1 0]
+  (decode-1-char \b) => [0 1 1 0 1 1])
+
+(defmulti decode4 dispatch-on-count-=)
+
+;; we only compute the first byte if we have 2 == at the end of the string
+(defmethod decode4 2 [[a b _ _]] (mapcat decode-b64char [a b]))
+
+(fact
+  (decode4 "ab==") => [0 1 1 0 1 0 0 1 1 0 1 1]
+  (decode4 "ba==") => [0 1 1 0 1 1 0 1 1 0 1 0])
+
+;; we only compute the first 2 bytes if we have only 1 = at the end of the string
+(defmethod decode4 1 [[a b c _]] (mapcat decode-b64char [a b c]))
+
+(fact
+  (decode4 "aab=") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 1]
+  (decode4 "abb=") => [0 1 1 0 1 0 0 1 1 0 1 1 0 1 1 0 1 1])
+
+;; we encode everything in byte otherwise
+(defmethod decode4 :default [s] (mapcat decode-b64char s))
+
+(fact
+  (decode4 "aaaa") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 0]
+  (decode4 "abaa") => [0 1 1 0 1 0 0 1 1 0 1 1 0 1 1 0 1 0 0 1 1 0 1 0]
+  (decode4 "aaba") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 1 0 1 1 0 1 0]
+  (decode4 "aaab") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 1])
+
+(defn decode
+  "Decode base64 message"
+  [s]
+  (->> s
+       (partition 4)               ;; 4 words (32 bits)
+       (mapcat decode4)            ;; decoded into 3 bytes (24 bits)
+       (partition 8)               ;; spliced into byte word (8 bits)
+       (map bits2char)             ;; converted back into char
+       (s/join "")))  ;; then joined to form a string
+
+(fact
+  (decode "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  =>  "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure."
+
+  (decode "YW55IGNhcm5hbCBwbGVhcw==") => "any carnal pleas"
+  (decode "YW55IGNhcm5hbCBwbGVhc3U=") => "any carnal pleasu"
+  (decode "YW55IGNhcm5hbCBwbGVhc3Vy") => "any carnal pleasur")
