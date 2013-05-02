@@ -112,8 +112,8 @@
   (comp b/to-6bits d/base64-dec))
 
 (fact
-  (decode-1-char \a) => [0 1 1 0 1 0]
-  (decode-1-char \b) => [0 1 1 0 1 1])
+  (decode-b64char \a) => [0 1 1 0 1 0]
+  (decode-b64char \b) => [0 1 1 0 1 1])
 
 (defn decode4
   "Decode 4 characters into 3 bytes (24 bits)"
