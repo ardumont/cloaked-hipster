@@ -4,18 +4,31 @@
   (:require [crypto-challenge.dico   :as d]
             [crypto-challenge.binary :as b]))
 
-(defn- comp24
-  "Given a partition of 24 bits, compute the complement [partition of multiple 6 bits, list of complement = char]"
-  [b]
+;; Given a partition of 24 bits, compute the complement [partition of multiple 6 bits, list of complement = char]
+(defmulti comp24 count)
 
-  (case (count b) 8  [(b/comp-after 12 b) [\= \=]] ;; complement 4 bits to be able to have 2 bytes (12 bits) and we complements with 2 = chars
-                  16 [(b/comp-after 18 b) [\=]]    ;; complement 2 bits to be able to have 3 bytes (18 bits) and we complements with 1 = char
-                  [b                  []]))
+;; complement 4 bits to be able to have 2 bytes (12 bits) and we complements with 2 = chars
+(defmethod comp24 8 [b] [(b/comp-after 12 b)
+                         [\= \=]])
 
 (fact
-  (comp24 [1 1 1 1 1 1 1 1])                                 => [[1 1 1 1 1 1 1 1 0 0 0 0]                         [\= \=]]
-  (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1])                 => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 0 0]             [\=]]
-  (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1] []])
+  (comp24 [1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0]
+                                 [\= \=]])
+
+;; complement 2 bits to be able to have 3 bytes (18 bits) and we complements with 1 = char
+(defmethod comp24 16 [b] [(b/comp-after 18 b)
+                          [\=]])
+
+(fact
+  (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 0 0]
+                                                 [\=]])
+
+;; chunk of 24 remains the same without any complement
+(defmethod comp24 :default [b] [b []])
+
+(fact
+  (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]
+                                                                 []])
 
 (def to-bits ^{:private true
                :doc "Transform a string into a list of bits."}
