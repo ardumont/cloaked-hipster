@@ -8,12 +8,27 @@
 ;; head - most significant [0 0 0 0 0 1 1 1] - least significant - tail
 ;; [0 0 0 0 0 1 1 1] reads 7
 
+(defn- comp-bit-sequence
+  "Complement a bit sequence by providing the policy through the comp-fn function."
+  [n b comp-fn]
+  (->> (iterate comp-fn b)
+       (drop-while #(not= n (count %)))
+       first))
+
+(fact
+  (comp-bit-sequence 8  [1 1 1]           (partial concat [0])) => [0 0 0 0 0 1 1 1]
+  (comp-bit-sequence 8  [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 1 0 0 0]
+  (comp-bit-sequence 4  [1 1 1]           (partial concat [0])) => [0 1 1 1]
+  (comp-bit-sequence 10 [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 0 0 1 0 0 0]
+  (comp-bit-sequence 8  [1 1 1]           #(concat % [0]))      => [1 1 1 0 0 0 0 0]
+  (comp-bit-sequence 8  [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0]
+  (comp-bit-sequence 4  [1 1 1]           #(concat % [0]))      => [1 1 1 0]
+  (comp-bit-sequence 10 [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0 0 0])
+
 (defn comp-before
   "Complement by the most significant side (head) a bit sequence to n bits (if necessary)."
   [n b]
-  (->> (iterate (partial concat [0]) b)
-       (drop-while #(not= n (count %)))
-       first))
+  (comp-bit-sequence n b (partial concat [0])))
 
 (fact
   (comp-before 8 [1 1 1])            => [0 0 0 0 0 1 1 1]
@@ -24,9 +39,7 @@
 (defn comp-after
   "Complement by the least significant side (tail) a bit sequence to n bits (if necessary)."
   [n b]
-  (->> (iterate #(concat % [0]) b)
-       (drop-while #(not= n (count %)))
-       first))
+  (comp-bit-sequence n b #(concat % [0])))
 
 (fact
   (comp-after 8 [1 1 1])            => [1 1 1 0 0 0 0 0]
