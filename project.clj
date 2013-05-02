@@ -1,5 +1,5 @@
-(defproject cryto-challenge "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
+(defproject crypto "0.1.0-SNAPSHOT"
+  :description "Fun with crypto"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

@@ -1,4 +1,4 @@
-(ns crypto-challenge.dico
+(ns crypto.dico
   "A dictionary namespace"
   (:use [midje.sweet :only [fact future-fact]]))
 

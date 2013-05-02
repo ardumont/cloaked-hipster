@@ -1,9 +1,9 @@
-(ns crypto-challenge.base64
+(ns crypto.base64
   "encode and decode a string in base64"
   (:use [midje.sweet :only [fact]])
-  (:require [crypto-challenge.dico   :as d]
-            [crypto-challenge.binary :as b]
-            [clojure.string          :as s]))
+  (:require [crypto.dico    :as d]
+            [crypto.binary  :as b]
+            [clojure.string :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; encoding
 
