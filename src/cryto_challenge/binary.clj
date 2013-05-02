@@ -65,3 +65,21 @@
 (fact
   (bin 97) => [0 1 1 0 0 0 0 1]
   (bin 2)  => [0 0 0 0 0 0 1 0])
+
+(defn to-num
+  "Convert a bit sequence into a number"
+  [b]
+  (if (= b (repeat 8 0))
+    0
+    (->> (reverse b)
+         (map-indexed (fn [i v] [(Math/pow 2 i) v]))
+         (reduce (fn [a [e n]] (if (= n 1) (+ e a) a)) 0)
+         int)))
+
+(fact
+  (to-num [1 1 0 0 0 0 1]) => 97
+  (to-num [0 1 1 0 0 0 0 1]) => 97
+  (to-num [0 0 0 0 0 0 1 0]) => 2
+  (to-num [0 0 0 0 0 0 0 0]) => 0
+  (to-num [1 1 1 1 1 1 1 1]) => 255
+  (to-num [1 1 1 1 1 1 1 0]) => 254)
