@@ -2,17 +2,19 @@
   "A binary namespace to deal with transformation into binary"
   (:use [midje.sweet :only [fact future-fact]]))
 
-(defn- make8
-  "Complement a bit sequence to 8 bits if necessary"
-  [b]
+(defn make
+  "Complement a bit sequence to n bits if necessary"
+  [n b]
   (->> (iterate #(concat [0] %) b)
-       (drop-while #(not= 8 (count %)))
+       (drop-while #(not= n (count %)))
        (take 1)
        first))
 
 (fact
-  (make8 [1 1 1])           => [0 0 0 0 0 1 1 1]
-  (make8 [0 0 0 0 1 0 0 0]) => [0 0 0 0 1 0 0 0])
+  (make 8 [1 1 1])           => [0 0 0 0 0 1 1 1]
+  (make 8 [0 0 0 0 1 0 0 0]) => [0 0 0 0 1 0 0 0]
+  (make 4 [1 1 1])           => [0 1 1 1]
+  (make 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 0 0 1 0 0 0])
 
 (defn- to-bin
   "Convert a number into binary sequence"
@@ -27,7 +29,7 @@
   (to-bin 2)  => [1 0])
 
 (def bin ^{:doc "Given a number, compute its 8-bit representation"}
-  (comp make8 to-bin))
+  (comp (partial make 8) to-bin))
 
 (fact
   (bin 97) => [0 1 1 0 0 0 0 1]
