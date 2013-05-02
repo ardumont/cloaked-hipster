@@ -60,12 +60,30 @@
   (bin 97) => [1 1 0 0 0 0 1]
   (bin 2)  => [1 0])
 
-(def to-bin ^{:doc "Given a number, compute its 8-bit representation."}
-  (comp (partial comp-before 8) bin))
+(defn- to-binary
+  "Given a number, compute a function permitting the translation into a n-bits sequence"
+  [n]
+  (comp (partial comp-before n) bin))
+
+(fact
+  ((to-binary 8) 97) => [0 1 1 0 0 0 0 1]
+  ((to-binary 8) 2)  => [0 0 0 0 0 0 1 0])
+
+(def to-bin ^{:doc "Given a number, compute its 8-bits representation."}
+  (to-binary 8))
 
 (fact
   (to-bin 97) => [0 1 1 0 0 0 0 1]
   (to-bin 2)  => [0 0 0 0 0 0 1 0])
+
+(def to-6bits ^{:doc "Given a number, compute its 6-bits representation."}
+  (to-binary 6))
+
+(fact
+  (to-6bits 26) => [0 1 1 0 1 0]
+  (to-6bits 1)  => [0 0 0 0 0 1]
+  (to-6bits 2)  => [0 0 0 0 1 0]
+  (to-6bits 3)  => [0 0 0 0 1 1])
 
 (defn to-num
   "Convert a bit sequence into a number"
