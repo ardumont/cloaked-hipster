@@ -2,7 +2,7 @@
   "A dictionary namespace"
   (:use [midje.sweet :only [fact future-fact]]))
 
-(def ^{:doc "base64 dictionary"}
+(def ^{:doc "base64 dictionary to encode in base64"}
   base64 {0 \A
           16 \Q
           32 \g
@@ -67,3 +67,18 @@
           31 \f
           47 \v
           63 \/})
+
+(defn- return-map
+  [m]
+  (into {} (map (fn [[k v]] [v k]) m)))
+
+(fact
+  (return-map {:a :b :c :d})              => {:b :a :d :c}
+  (return-map (return-map {:a :b :c :d})) => {:a :b :c :d})
+
+(def ^{:doc "base64 dictionary to decode in base64"}
+  base64-dec (return-map base64))
+
+(fact
+  (return-map base64)     => base64-dec
+  (return-map base64-dec) => base64)
