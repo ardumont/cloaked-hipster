@@ -82,7 +82,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; decoding
 
-(defn- dispatch-on-count-=
+(defn- nb-chars-to-decode
   "A dispatch function on the count of = char (which is a complement character) on the last 2 characters from the list of characters"
   [[_ _ c d]]
   (cond (and (= c \=) (= d \=)) 2
@@ -101,30 +101,25 @@
   (decode-1-char \a) => [0 1 1 0 1 0]
   (decode-1-char \b) => [0 1 1 0 1 1])
 
-(defmulti decode4 dispatch-on-count-=)
-
-;; we only compute the first byte if we have 2 == at the end of the string
-(defmethod decode4 2 [[a b _ _]] (mapcat decode-b64char [a b]))
-
-(fact
-  (decode4 "ab==") => [0 1 1 0 1 0 0 1 1 0 1 1]
-  (decode4 "ba==") => [0 1 1 0 1 1 0 1 1 0 1 0])
-
-;; we only compute the first 2 bytes if we have only 1 = at the end of the string
-(defmethod decode4 1 [[a b c _]] (mapcat decode-b64char [a b c]))
+(defn decode4
+  "Decode 4 characters into 3 bytes (24 bits)"
+  [s]
+  (let [nb-chars-to-dec (- 4 (nb-chars-to-decode s))]
+    (->> s
+         (take nb-chars-to-dec)
+         (mapcat decode-b64char))))
 
 (fact
-  (decode4 "aab=") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 1]
-  (decode4 "abb=") => [0 1 1 0 1 0 0 1 1 0 1 1 0 1 1 0 1 1])
-
-;; we encode everything in byte otherwise
-(defmethod decode4 :default [s] (mapcat decode-b64char s))
-
+  (decode4 "ab==") => [0 1 1 0 1 0, 0 1 1 0 1 1]
+  (decode4 "ba==") => [0 1 1 0 1 1, 0 1 1 0 1 0])
 (fact
-  (decode4 "aaaa") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 0]
-  (decode4 "abaa") => [0 1 1 0 1 0 0 1 1 0 1 1 0 1 1 0 1 0 0 1 1 0 1 0]
-  (decode4 "aaba") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 1 0 1 1 0 1 0]
-  (decode4 "aaab") => [0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 0 0 1 1 0 1 1])
+  (decode4 "aab=") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 1]
+  (decode4 "abb=") => [0 1 1 0 1 0, 0 1 1 0 1 1, 0 1 1 0 1 1])
+(fact
+  (decode4 "aaaa") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 0]
+  (decode4 "abaa") => [0 1 1 0 1 0, 0 1 1 0 1 1, 0 1 1 0 1 0, 0 1 1 0 1 0]
+  (decode4 "aaba") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 1, 0 1 1 0 1 0]
+  (decode4 "aaab") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 1])
 
 (defn decode
   "Decode base64 message"
