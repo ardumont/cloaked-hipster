@@ -39,13 +39,15 @@
                                                                     1 1 1 1 1 1]
                                                                    []])
 
-(def char2bits ^{:doc "Convert a char into a 8-bits sequence"}
+(def char2bits ^{:private true
+                 :doc "Convert a char into a 8-bits sequence"}
   (comp b/to-8bits int))
 
 (fact
   (char2bits \a) => [0 1 1 0 0 0 0 1])
 
-(def bits2char ^{:doc "Convert a 8-bits sequence into a char"}
+(def bits2char ^{:private true
+                 :doc "Convert a 8-bits sequence into a char"}
   (comp char b/to-num))
 
 (fact
@@ -67,7 +69,7 @@
                            0 1 1 0 1 1 0 0,
                            0 1 1 0 1 1 0 0])
 
-(defn to-base64
+(defn- to-base64
   "Given a 8 or 16 or 24-bits chunk, compute the bits sequence into base64."
   [b]
   (let [[part complement] (comp24 b)
