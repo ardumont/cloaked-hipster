@@ -1,4 +1,4 @@
-# cryto-challenge
+# crypto
 
 Some hacking around cryptography to try and learn stuff.
 
