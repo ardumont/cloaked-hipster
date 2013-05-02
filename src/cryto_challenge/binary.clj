@@ -1,4 +1,4 @@
-(ns cryto-challenge.binary
+(ns crypto-challenge.binary
   "A binary namespace to deal with transformation into binary"
   (:use [midje.sweet :only [fact future-fact]]))
 
