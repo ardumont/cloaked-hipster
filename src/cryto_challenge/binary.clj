@@ -42,6 +42,7 @@
   (comp-bit-sequence n b #(concat % [0])))
 
 (fact
+  (comp-after 10 [1 1 1 1 1 1 1 1])  => [1 1 1 1 1 1 1 1 0 0]
   (comp-after 8 [1 1 1])            => [1 1 1 0 0 0 0 0]
   (comp-after 8 [0 0 0 0 1 0 0 0])  => [0 0 0 0 1 0 0 0]
   (comp-after 4 [1 1 1])            => [1 1 1 0]
