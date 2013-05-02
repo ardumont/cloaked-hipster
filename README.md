@@ -1,13 +1,13 @@
 # cryto-challenge
 
-A Clojure library designed to ... well, that part is up to you.
+Some hacking around cryptography to try and learn stuff.
 
 ## Usage
 
-FIXME
+For me to learn but everybody can learn too!
 
 ## License
 
-Copyright © 2013 FIXME
+Copyright © 2013 committers
 
 Distributed under the Eclipse Public License, the same as Clojure.
