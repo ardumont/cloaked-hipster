@@ -49,7 +49,7 @@
   (comp-after 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 1 0 0 0 0 0])
 
 (defn- bin
-  "Convert a number into binary sequence"
+  "Convert a number into binary sequence (will create as much bits as needed)."
   [n]
   (if (= 0 n)
     []
@@ -60,7 +60,7 @@
   (bin 97) => [1 1 0 0 0 0 1]
   (bin 2)  => [1 0])
 
-(def to-bin ^{:doc "Given a number, compute its 8-bit representation"}
+(def to-bin ^{:doc "Given a number, compute its 8-bit representation."}
   (comp (partial comp-before 8) bin))
 
 (fact
