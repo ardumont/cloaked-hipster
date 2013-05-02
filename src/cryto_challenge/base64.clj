@@ -106,9 +106,9 @@
         :else                   0))
 
 (fact
-  (dispatch-on-count-= "ab==") => 2
-  (dispatch-on-count-= "abc=") => 1
-  (dispatch-on-count-= "abcd") => 0)
+  (nb-chars-to-decode "ab==") => 2
+  (nb-chars-to-decode "abc=") => 1
+  (nb-chars-to-decode "abcd") => 0)
 
 (def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
   (comp b/to-6bits d/base64-dec))
