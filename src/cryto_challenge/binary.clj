@@ -48,24 +48,24 @@
   (comp-after 4 [1 1 1])            => [1 1 1 0]
   (comp-after 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 1 0 0 0 0 0])
 
-(defn- to-bin
+(defn- bin
   "Convert a number into binary sequence"
   [n]
   (if (= 0 n)
     []
-    (concat (-> n (/ 2) int to-bin)
+    (concat (-> n (/ 2) int bin)
             [(mod n 2)])))
 
 (fact
-  (to-bin 97) => [1 1 0 0 0 0 1]
-  (to-bin 2)  => [1 0])
+  (bin 97) => [1 1 0 0 0 0 1]
+  (bin 2)  => [1 0])
 
-(def bin ^{:doc "Given a number, compute its 8-bit representation"}
-  (comp (partial comp-before 8) to-bin))
+(def to-bin ^{:doc "Given a number, compute its 8-bit representation"}
+  (comp (partial comp-before 8) bin))
 
 (fact
-  (bin 97) => [0 1 1 0 0 0 0 1]
-  (bin 2)  => [0 0 0 0 0 0 1 0])
+  (to-bin 97) => [0 1 1 0 0 0 0 1]
+  (to-bin 2)  => [0 0 0 0 0 0 1 0])
 
 (defn to-num
   "Convert a bit sequence into a number"

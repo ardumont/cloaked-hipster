@@ -4,8 +4,8 @@
   (:require [crypto-challenge.dico   :as d]
             [crypto-challenge.binary :as b]))
 
-(defn comp24
-  "Given a partition of 24 bits, compute the complement structure"
+(defn- comp24
+  "Given a partition of 24 bits, compute the complement [partition of multiple 6 bits, list of complement = char]"
   [b]
 
   (case (count b) 8  [(b/comp-after 12 b) [\= \=]] ;; complement 4 bits to be able to have 2 bytes (12 bits) and we complements with 2 = chars
@@ -20,11 +20,10 @@
 (defn encode
   "ascii to base64"
   [s]
-  (->> (partition-all 3 s)
-       (mapcat
-        (fn [s] (mapcat (comp b/bin int) s)))
-       (partition-all 24)
-       (mapcat (fn [b]
+  (->> (partition-all 3 s)                                                        ;; 3-words chunks (24 bits)
+       (mapcat (partial mapcat (comp b/to-bin int)))                              ;; transform into 8-bits words all concatenated
+       (partition-all 24)                                                         ;; 24-bits chunks
+       (mapcat (fn [b]                                                             ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
                  (let [[part complement] (comp24 b)
                        p24               (->> part
                                               (partition 6)
