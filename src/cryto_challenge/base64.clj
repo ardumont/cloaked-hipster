@@ -1,6 +1,6 @@
 (ns crypto-challenge.base64
-  "A namespace to try and learn to encrypt from string to base64"
-  (:use [midje.sweet :only [fact future-fact]])
+  "encode and decode a string in base64"
+  (:use [midje.sweet :only [fact]])
   (:require [crypto-challenge.dico   :as d]
             [crypto-challenge.binary :as b]
             [clojure.string          :as s]))
@@ -15,7 +15,8 @@
                          [\= \=]])
 
 (fact
-  (comp24 [1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0]
+  (comp24 [1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
+                                  1 1 0 0 0 0]
                                  [\= \=]])
 
 ;; complement 2 bits to be able to have 3 bytes (18 bits) and we complements with 1 = char
@@ -23,15 +24,20 @@
                           [\=]])
 
 (fact
-  (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 0 0]
-                                                 [\=]])
+  (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1]) => [[1 1 1 1 1 1,
+                                                   1 1 0 0 0 0,
+                                                   0 0 1 1 0 0]
+                                                  [\=]])
 
 ;; chunk of 24 remains the same without any complement
 (defmethod comp24 :default [b] [b []])
 
 (fact
-  (comp24 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]
-                                                                 []])
+  (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1, 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
+                                                                    1 1 0 0 0 0,
+                                                                    0 0 1 1 1 1,
+                                                                    1 1 1 1 1 1]
+                                                                   []])
 
 (def char2bits ^{:doc "Convert a char into a 8-bits sequence"}
   (comp b/to-8bits int))
@@ -50,8 +56,16 @@
   (partial mapcat char2bits))
 
 (fact
-  (to-bits [\a \b \c]) => [0 1 1 0 0 0 0 1 0 1 1 0 0 0 1 0 0 1 1 0 0 0 1 1]
-  (to-bits "haskell")  => [0 1 1 0 1 0 0 0 0 1 1 0 0 0 0 1 0 1 1 1 0 0 1 1 0 1 1 0 1 0 1 1 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0])
+  (to-bits [\a \b \c]) => [0 1 1 0 0 0 0 1,
+                           0 1 1 0 0 0 1 0,
+                           0 1 1 0 0 0 1 1]
+  (to-bits "haskell")  => [0 1 1 0 1 0 0 0,
+                           0 1 1 0 0 0 0 1,
+                           0 1 1 1 0 0 1 1,
+                           0 1 1 0 1 0 1 1,
+                           0 1 1 0 0 1 0 1,
+                           0 1 1 0 1 1 0 0,
+                           0 1 1 0 1 1 0 0])
 
 (defn to-base64
   "Given a 8 or 16 or 24-bits chunk, compute the bits sequence into base64."
@@ -63,9 +77,9 @@
     (concat p24 complement)))
 
 (fact
-  (to-base64 [1 1 1 1 1 1 1 1 0 0 0 0])                         => [\/ \w]
-  (to-base64 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 0 0])             => [\/ \w \M]
-  (to-base64 [1 1 1 1 1 1 1 1 0 0 0 0 0 0 1 1 1 1 1 1 1 1 1 1]) => [\/ \w \P \/])
+  (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0])                           => [\/ \w]
+  (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
+  (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
 
 (defn encode
   "Encode into base64"
@@ -110,16 +124,34 @@
          (mapcat decode-b64char))))
 
 (fact
-  (decode4 "ab==") => [0 1 1 0 1 0, 0 1 1 0 1 1]
-  (decode4 "ba==") => [0 1 1 0 1 1, 0 1 1 0 1 0])
+  (decode4 "ab==") => [0 1 1 0 1 0,
+                       0 1 1 0 1 1]
+  (decode4 "ba==") => [0 1 1 0 1 1,
+                       0 1 1 0 1 0])
 (fact
-  (decode4 "aab=") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 1]
-  (decode4 "abb=") => [0 1 1 0 1 0, 0 1 1 0 1 1, 0 1 1 0 1 1])
+  (decode4 "aab=") => [0 1 1 0 1 0,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 1]
+  (decode4 "abb=") => [0 1 1 0 1 0,
+                       0 1 1 0 1 1,
+                       0 1 1 0 1 1])
 (fact
-  (decode4 "aaaa") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 0]
-  (decode4 "abaa") => [0 1 1 0 1 0, 0 1 1 0 1 1, 0 1 1 0 1 0, 0 1 1 0 1 0]
-  (decode4 "aaba") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 1, 0 1 1 0 1 0]
-  (decode4 "aaab") => [0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 0, 0 1 1 0 1 1])
+  (decode4 "aaaa") => [0 1 1 0 1 0,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 0]
+  (decode4 "abaa") => [0 1 1 0 1 0,
+                       0 1 1 0 1 1,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 0]
+  (decode4 "aaba") => [0 1 1 0 1 0,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 1,
+                       0 1 1 0 1 0]
+  (decode4 "aaab") => [0 1 1 0 1 0,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 0,
+                       0 1 1 0 1 1])
 
 (defn decode
   "Decode base64 message"
