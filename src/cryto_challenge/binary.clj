@@ -13,7 +13,6 @@
   [n b]
   (->> (iterate #(concat [0] %) b)
        (drop-while #(not= n (count %)))
-       (take 1)
        first))
 
 (fact
