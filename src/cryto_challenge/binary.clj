@@ -11,7 +11,7 @@
 (defn comp-before
   "Complement a bit sequence to n bits (if necessary) - the bits are added by the most significant side (so by the head)."
   [n b]
-  (->> (iterate #(concat [0] %) b)
+  (->> (iterate (partial concat [0]) b)
        (drop-while #(not= n (count %)))
        first))
 
