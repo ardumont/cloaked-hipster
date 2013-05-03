@@ -1,7 +1,8 @@
 (ns crypto.base64
   "encode and decode a string in base64"
   (:use [midje.sweet :only [fact]])
-  (:require [crypto.dico    :as d]
+  (:require [midje.sweet    :as m]
+            [crypto.dico    :as d]
             [crypto.binary  :as b]
             [clojure.string :as s]))
 
@@ -14,7 +15,7 @@
 (defmethod comp24 8 [b] [(b/comp-after 12 b)
                          [\= \=]])
 
-(fact
+(m/fact
   (comp24 [1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
                                   1 1 0 0 0 0]
                                  [\= \=]])
@@ -23,7 +24,7 @@
 (defmethod comp24 16 [b] [(b/comp-after 18 b)
                           [\=]])
 
-(fact
+(m/fact
   (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1]) => [[1 1 1 1 1 1,
                                                    1 1 0 0 0 0,
                                                    0 0 1 1 0 0]
@@ -32,7 +33,7 @@
 ;; chunk of 24 remains the same without any complement
 (defmethod comp24 :default [b] [b []])
 
-(fact
+(m/fact
   (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1, 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
                                                                     1 1 0 0 0 0,
                                                                     0 0 1 1 1 1,
@@ -43,21 +44,21 @@
                  :doc "Convert a char into a 8-bits sequence"}
   (comp b/to-8bits int))
 
-(fact
+(m/fact
   (char2bits \a) => [0 1 1 0 0 0 0 1])
 
 (def bits2char ^{:private true
                  :doc "Convert a 8-bits sequence into a char"}
   (comp char b/to-num))
 
-(fact
+(m/fact
   (bits2char [0 1 1 0 0 0 0 1]) => \a)
 
 (def to-bits ^{:private true
                :doc "Transform a string into a list of bits."}
   (partial mapcat char2bits))
 
-(fact
+(m/fact
   (to-bits [\a \b \c]) => [0 1 1 0 0 0 0 1,
                            0 1 1 0 0 0 1 0,
                            0 1 1 0 0 0 1 1]
@@ -78,7 +79,7 @@
                                (map (comp d/base64 b/to-num)))]
     (concat p24 complement)))
 
-(fact
+(m/fact
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0])                           => [\/ \w]
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
@@ -91,7 +92,7 @@
        (mapcat to-base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
        (s/join "")))
 
-(fact
+(m/fact
   (encode-bits (to-bits "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
   (encode-bits (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
   (encode-bits (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
@@ -104,7 +105,7 @@
   [b]
   (encode-bits b))
 
-(fact
+(m/fact
   (encode (to-bits "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
   (encode (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
   (encode (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
@@ -115,7 +116,7 @@
        to-bits  ;; Transform all chars into 8-bits word binary sequence
        encode-bits))
 
-(fact
+(m/fact
   (encode "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
   => "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
 
@@ -124,7 +125,7 @@
 (def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
   (comp b/to-6bits d/base64-dec))
 
-(fact
+(m/fact
   (decode-b64char \a) => [0 1 1 0 1 0]
   (decode-b64char \b) => [0 1 1 0 1 1])
 
@@ -135,19 +136,19 @@
        (take-while #(not= \= %))
        (mapcat decode-b64char)))
 
-(fact
+(m/fact
   (decode4 "ab==") => [0 1 1 0 1 0,
                        0 1 1 0 1 1]
   (decode4 "ba==") => [0 1 1 0 1 1,
                        0 1 1 0 1 0])
-(fact
+(m/fact
   (decode4 "aab=") => [0 1 1 0 1 0,
                        0 1 1 0 1 0,
                        0 1 1 0 1 1]
   (decode4 "abb=") => [0 1 1 0 1 0,
                        0 1 1 0 1 1,
                        0 1 1 0 1 1])
-(fact
+(m/fact
   (decode4 "aaaa") => [0 1 1 0 1 0,
                        0 1 1 0 1 0,
                        0 1 1 0 1 0,
@@ -175,7 +176,7 @@
        (map bits2char)             ;; converted back into char
        (s/join "")))  ;; then joined to form a string
 
-(fact
+(m/fact
   (decode "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
   =>  "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure."
 

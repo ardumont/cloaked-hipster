@@ -1,6 +1,6 @@
 (ns crypto.binary
   "A binary namespace to deal with transformation into binary"
-  (:use [midje.sweet :only [fact future-fact]]))
+  (:require [midje.sweet :as m]))
 
 ;; bits sequence are read from the left to the right (big endian)
 ;; significant first, least significant
@@ -15,7 +15,7 @@
        (drop-while #(not= n (count %)))
        first))
 
-(fact
+(m/fact
   (comp-bits-sequence 8  [1 1 1]           (partial concat [0])) => [0 0 0 0 0 1 1 1]
   (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 1 0 0 0]
   (comp-bits-sequence 4  [1 1 1]           (partial concat [0])) => [0 1 1 1]
@@ -30,7 +30,7 @@
   [n b]
   (comp-bits-sequence n b (partial concat [0])))
 
-(fact
+(m/fact
   (comp-before 8 [1 1 1])            => [0 0 0 0 0 1 1 1]
   (comp-before 8 [0 0 0 0 1 0 0 0])  => [0 0 0 0 1 0 0 0]
   (comp-before 4 [1 1 1])            => [0 1 1 1]
@@ -41,7 +41,7 @@
   [n b]
   (comp-bits-sequence n b #(concat % [0])))
 
-(fact
+(m/fact
   (comp-after 10 [1 1 1 1 1 1 1 1]) => [1 1 1 1 1 1 1 1 0 0]
   (comp-after 8 [1 1 1])            => [1 1 1 0 0 0 0 0]
   (comp-after 8 [0 0 0 0 1 0 0 0])  => [0 0 0 0 1 0 0 0]
@@ -56,7 +56,7 @@
     (concat (-> b (/ 2) int bin)
             [(mod b 2)])))
 
-(fact
+(m/fact
   (bin 97)  => [1 1 0 0 0 0 1]
   (bin 2)   => [1 0]
   (bin 255) => [1 1 1 1 1 1 1 1])
@@ -66,21 +66,21 @@
   [b]
   (comp (partial comp-before b) bin))
 
-(fact
+(m/fact
   ((to-binary 8) 97) => [0 1 1 0 0 0 0 1]
   ((to-binary 8) 2)  => [0 0 0 0 0 0 1 0])
 
 (def to-8bits ^{:doc "Given a byte, compute its 8-bits word binary sequence."}
   (to-binary 8))
 
-(fact
+(m/fact
   (to-8bits 97) => [0 1 1 0 0 0 0 1]
   (to-8bits 2)  => [0 0 0 0 0 0 1 0])
 
 (def to-6bits ^{:doc "Given a byte, compute its 6-bits word binary sequence."}
   (to-binary 6))
 
-(fact
+(m/fact
   (to-6bits 26) => [0 1 1 0 1 0]
   (to-6bits 1)  => [0 0 0 0 0 1]
   (to-6bits 2)  => [0 0 0 0 1 0]
@@ -94,7 +94,7 @@
        (reduce (fn [a [e n]] (if (= n 1) (+ e a) a)) 0)
        int))
 
-(fact
+(m/fact
   (to-num [1 1 0 0 0 0 1])   => 97
   (to-num [0 1 1 0 0 0 0 1]) => 97
   (to-num [0 0 0 0 0 0 1 0]) => 2
