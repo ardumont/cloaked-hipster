@@ -9,8 +9,7 @@
   [s]
   (->> s
        (map (comp byte int))
-       byte-array
-       bytes))
+       byte-array))
 
 (m/fact
   (-> "clojure rocks!" encode String.) => "clojure rocks!")
