@@ -9,13 +9,13 @@ Now use this code everywhere for the rest of the exercises. Here's a simple rule
   Always operate on raw bytes, never on encoded strings. Only use hex and base64 for pretty-printing."
   (:require [midje.sweet   :as m]
             [crypto.byte   :as b]
-            [crypto.hex    :as h]
+            [crypto.hex    :as hex]
             [crypto.base64 :as b64]))
 
 (defn encode "Encode an hexadecimal string into base64"
   [s]
   (-> s
-      h/from-hex
+      hex/decode
       b64/encode))
 
 (m/fact
@@ -27,7 +27,7 @@ Now use this code everywhere for the rest of the exercises. Here's a simple rule
   [s]
   (-> s
       b64/decode
-      h/to-hex))
+      hex/encode))
 
 (m/fact
   (decode "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
