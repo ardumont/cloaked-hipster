@@ -14,17 +14,25 @@ The string:
             [crypto.base64     :as b64]
             [crypto.hex        :as hex]))
 
-(defn xor
-  "compute the xor of 2 hex strings"
+(defn xor-with-checks
+  "Compute the xor of 2 hex strings of same size."
   [h0 h1]
   {:pre [(= (count h0) (count h1))]}
+  (xor h0 h1))
+
+(m/fact
+  (xor-with-checks "abc" "defv")                                                                  => (m/throws AssertionError "Assert failed: (= (count h0) (count h1))")
+  (xor-with-checks "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965") => "746865206b696420646f6e277420706c6179")
+
+(defn xor
+  "Compute xor of 2 hex strings"
+  [h0 h1]
   (->> [h0 h1]
-       (map (comp byte/to-bits ascii/to-bytes hex/decode))
+       (map (comp byte/to-bits hex/to-bytes))
        (apply map bit-xor)
        (partition 8)
        (map binary/to-bytes)
        hex/encode))
 
-(m/fact
-  (xor "abc" "defv")                                                                  => (m/throws AssertionError "Assert failed: (= (count h0) (count h1))")
+(m/fact :one-way
   (xor "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965") => "746865206b696420646f6e277420706c6179")
