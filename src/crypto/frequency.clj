@@ -1,6 +1,7 @@
 (ns crypto.frequency
   "A dictionary namespace"
-  (:require [midje.sweet :as m]))
+  (:require [midje.sweet :as m]
+            [crypto.byte :as byte]))
 
 (def ^{:doc "English letter frequency - http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html"}
   frequency
@@ -34,3 +35,6 @@
 (m/fact
   (map frequency (map char (range 97 123)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
+
+(def hex-frequency ^{:doc "frequency of english, key are encoded into hexadecimal"}
+  (into {} (map (fn [[k v]] [((comp byte/to-hex int) k) v]) frequency)))
