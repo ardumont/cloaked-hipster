@@ -1,13 +1,15 @@
 (ns crypto.hex
   "Hexadecimal namespace"
   (:require [midje.sweet    :as m]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [crypto.byte    :as b]))
 
 (defn encode
   "String to hexadecimal string"
   [s]
   (->> s
-       (map #(-> % int Integer/toHexString))
+       b/encode
+       (map #(-> % Integer/toHexString))
        (s/join "")))
 
 (m/fact
@@ -20,8 +22,8 @@
   (->> s
        (partition 2)
        (map (fn [c] (-> (s/join "" c)
-                       (Integer/parseInt 16)
-                       char)))
+                       (Integer/parseInt 16))))
+       b/decode
        (s/join "")))
 
 (m/fact
