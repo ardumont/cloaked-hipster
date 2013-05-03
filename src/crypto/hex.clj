@@ -5,34 +5,11 @@
             [crypto.byte    :as byte]
             [crypto.ascii   :as ascii]))
 
-(defn- hex-subtlety
-  "A bad idea, need to change this as soon as the correctness is proved!"
-  [e] ({"0" "00"
-        "1" "01"
-        "2" "02"
-        "3" "03"
-        "4" "04"
-        "5" "05"
-        "6" "06"
-        "7" "07"
-        "8" "08"
-        "9" "09"
-        "a" "0a"
-        "b" "0b"
-        "c" "0c"
-        "d" "0d"
-        "e" "0e"
-        "f" "0f"} e e))
+(defmulti byte-to-hex "byte to hexadecimal, beware, we want 2 characters even for number strictly under 16"
+  (fn [b] (< b 16)))
 
-(m/fact
-  (map hex-subtlety ["0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "a" "b" "c" "d" "e" "f" "g"]) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "g"])
-
-(defn- byte-to-hex
-  "byte to hexadecimal"
-  [b]
-  (-> b
-      Integer/toHexString
-      hex-subtlety))
+(defmethod byte-to-hex false [b] (format "%x" b))
+(defmethod byte-to-hex true  [b] (format "0%x" b))
 
 (m/fact
   (map byte-to-hex (range 0 20)) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "10" "11" "12" "13"])
