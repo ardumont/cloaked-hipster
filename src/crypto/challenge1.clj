@@ -15,7 +15,7 @@ Now use this code everywhere for the rest of the exercises. Here's a simple rule
 (defn encode "Encode an hexadecimal string into base64"
   [s]
   (-> s
-      hex/decode
+      hex/to-bytes
       b64/encode))
 
 (m/fact

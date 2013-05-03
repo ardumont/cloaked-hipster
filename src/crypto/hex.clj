@@ -2,7 +2,7 @@
   "Hexadecimal namespace"
   (:require [midje.sweet    :as m]
             [clojure.string :as s]
-            [crypto.byte    :as b]))
+            [crypto.byte    :as byte]))
 
 (defn- byte-to-hex
   "byte to hexadecimal"
@@ -17,7 +17,7 @@
   "String to hexadecimal string"
   [s]
   (->> s
-       b/encode
+       byte/encode
        (map byte-to-hex)
        (s/join "")))
 
@@ -37,13 +37,21 @@
   (hex-to-byte '(\f))    => 15
   (hex-to-byte '(\f \f)) => 255)
 
+(defn to-bytes
+  [s]
+  (->> s
+       (partition 2)
+       (map hex-to-byte)))
+
+(m/fact
+  (to-bytes "6861736b656c6c") => [104 97 115 107 101 108 108])
+
 (defn decode
   "Hexadecimal string to string"
   [s]
   (->> s
-       (partition 2)
-       (map hex-to-byte)
-       b/decode
+       to-bytes
+       byte/decode
        (s/join "")))
 
 (m/fact

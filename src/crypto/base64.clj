@@ -4,6 +4,8 @@
   (:require [midje.sweet    :as m]
             [crypto.dico    :as d]
             [crypto.binary  :as b]
+            [crypto.byte    :as byte]
+            [crypto.ascii   :as ascii]
             [clojure.string :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; encoding
@@ -40,36 +42,6 @@
                                                                     1 1 1 1 1 1]
                                                                    []])
 
-(def char2bits ^{:private true
-                 :doc "Convert a char into a 8-bits sequence"}
-  (comp b/to-8bits int))
-
-(m/fact
-  (char2bits \a) => [0 1 1 0 0 0 0 1])
-
-(def bits2char ^{:private true
-                 :doc "Convert a 8-bits sequence into a char"}
-  (comp char b/to-num))
-
-(m/fact
-  (bits2char [0 1 1 0 0 0 0 1]) => \a)
-
-(def to-bits ^{:private true
-               :doc "Transform a string into a list of bits."}
-  (partial mapcat char2bits))
-
-(m/fact
-  (to-bits [\a \b \c]) => [0 1 1 0 0 0 0 1,
-                           0 1 1 0 0 0 1 0,
-                           0 1 1 0 0 0 1 1]
-  (to-bits "haskell")  => [0 1 1 0 1 0 0 0,
-                           0 1 1 0 0 0 0 1,
-                           0 1 1 1 0 0 1 1,
-                           0 1 1 0 1 0 1 1,
-                           0 1 1 0 0 1 0 1,
-                           0 1 1 0 1 1 0 0,
-                           0 1 1 0 1 1 0 0])
-
 (defn- to-base64
   "Given a 8 or 16 or 24-bits chunk, compute the bits sequence into base64."
   [b]
@@ -84,37 +56,38 @@
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
 
-(defn- encode-bits
-  "Encode 8-bits word binary sequence into base64"
+(defn- encode-bytes
+  "Encode bytes sequence into base64"
   [b]
   (->> b
+       byte/to-bits        ;; into 8-bits word binary sequence
        (partition-all 24)  ;; 24-bits chunks
        (mapcat to-base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
        (s/join "")))
 
 (m/fact
-  (encode-bits (to-bits "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
-  (encode-bits (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
-  (encode-bits (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
+  (encode-bytes (ascii/to-bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
+  (encode-bytes (ascii/to-bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
+  (encode-bytes (ascii/to-bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
 
 ;; Encode into base64
-(defmulti encode "Encode ascii string or 8-bits word binary sequence into base64"
+(defmulti encode "Encode ascii string or bytes sequence into base64"
   string?)
 
 (defmethod encode false
   [b]
-  (encode-bits b))
+  (encode-bytes b))
 
 (m/fact
-  (encode (to-bits "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
-  (encode (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
-  (encode (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
+  (encode (ascii/to-bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
+  (encode (ascii/to-bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
+  (encode (ascii/to-bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
 
 (defmethod encode true
   [s]
   (->> s
-       to-bits  ;; Transform all chars into 8-bits word binary sequence
-       encode-bits))
+       ascii/to-bytes
+       encode-bytes))
 
 (m/fact
   (encode "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
@@ -170,11 +143,11 @@
   "Decode base64 message"
   [s]
   (->> s
-       (partition 4)               ;; 4 words (32 bits)
-       (mapcat decode4)            ;; decoded into 3 bytes (24 bits)
-       (partition 8)               ;; spliced into byte word (8 bits)
-       (map bits2char)             ;; converted back into char
-       (s/join "")))  ;; then joined to form a string
+       (partition 4)         ;; 4 words (32 bits)
+       (mapcat decode4)      ;; decoded into 3 bytes (24 bits)
+       (partition 8)         ;; spliced into byte word (8 bits)
+       (map ascii/bits2char) ;; converted back into char
+       (s/join "")))         ;; then joined to form a string
 
 (m/fact
   (decode "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
