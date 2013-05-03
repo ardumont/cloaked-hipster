@@ -96,8 +96,20 @@
   (encode-bits (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
   (encode-bits (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
 
-(defn encode
-  "Encode into base64"
+;; Encode into base64
+(defmulti encode "Encode ascii string or 8-bits word binary sequence into base64"
+  string?)
+
+(defmethod encode false
+  [b]
+  (encode-bits b))
+
+(fact
+  (encode (to-bits "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
+  (encode (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
+  (encode (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
+
+(defmethod encode true
   [s]
   (->> s
        to-bits  ;; Transform all chars into 8-bits word binary sequence
