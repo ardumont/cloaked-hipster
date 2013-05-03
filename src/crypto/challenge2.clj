@@ -8,7 +8,6 @@ The string:
 ... should produce:
  746865206b696420646f6e277420706c6179 - hex encoded (the kids don't play)"
   (:require [midje.sweet       :as m]
-            [crypto.challenge1 :as c1]
             [crypto.byte       :as byte]
             [crypto.binary     :as binary]
             [crypto.ascii      :as ascii]
