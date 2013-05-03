@@ -48,7 +48,7 @@
   (let [[part complement] (comp24 b)
         p24               (->> part
                                (partition 6)
-                               (map (comp d/base64 b/to-num)))]
+                               (map (comp d/base64 b/to-bytes)))]
     (concat p24 complement)))
 
 (m/fact

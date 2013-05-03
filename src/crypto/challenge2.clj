@@ -1,12 +1,12 @@
 (ns crypto.challenge2
   "2. Fixed XOR
-Write a function that takes two equal-length buffers and produces their XOR sum.
+Write a function that takes two equal-length buffers (hex encoded) and produces their XOR sum.
 The string:
- 1c0111001f010100061a024b53535009181c - hex encrypted?
+ 1c0111001f010100061a024b53535009181c - hex encoded
 ... after hex decoding, when xor'd against:
- 686974207468652062756c6c277320657965 - hex not encrypted in base64 (hit the bull's eye)
+ 686974207468652062756c6c277320657965 - hex encoded (hit the bull's eye)
 ... should produce:
- 746865206b696420646f6e277420706c6179 - hex not encrypted in base64 (the kids don't play)"
+ 746865206b696420646f6e277420706c6179 - hex encoded (the kids don't play)"
   (:require [midje.sweet       :as m]
             [crypto.challenge1 :as c1]
             [crypto.byte       :as byte]
@@ -23,7 +23,7 @@ The string:
        (map (comp byte/to-bits ascii/to-bytes hex/decode))
        (apply map bit-xor)
        (partition 8)
-       (map binary/to-num)
+       (map binary/to-bytes)
        hex/encode))
 
 (m/fact

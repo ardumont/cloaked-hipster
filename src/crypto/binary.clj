@@ -86,7 +86,7 @@
   (to-6bits 2)  => [0 0 0 0 1 0]
   (to-6bits 3)  => [0 0 0 0 1 1])
 
-(defn to-num
+(defn to-bytes
   "Convert a bits sequence into a number"
   [b]
   (->> (reverse b)
@@ -95,9 +95,9 @@
        int))
 
 (m/fact
-  (to-num [1 1 0 0 0 0 1])   => 97
-  (to-num [0 1 1 0 0 0 0 1]) => 97
-  (to-num [0 0 0 0 0 0 1 0]) => 2
-  (to-num [0 0 0 0 0 0 0 0]) => 0
-  (to-num [1 1 1 1 1 1 1 1]) => 255
-  (to-num [1 1 1 1 1 1 1 0]) => 254)
+  (to-bytes [1 1 0 0 0 0 1])   => 97
+  (to-bytes [0 1 1 0 0 0 0 1]) => 97
+  (to-bytes [0 0 0 0 0 0 1 0]) => 2
+  (to-bytes [0 0 0 0 0 0 0 0]) => 0
+  (to-bytes [1 1 1 1 1 1 1 1]) => 255
+  (to-bytes [1 1 1 1 1 1 1 0]) => 254)

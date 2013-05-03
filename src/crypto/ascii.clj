@@ -23,7 +23,7 @@
 
 (def bits2char ^{:private true
                  :doc "Convert a 8-bits sequence into a char"}
-  (comp char binary/to-num))
+  (comp char binary/to-bytes))
 
 (m/fact
   (bits2char [0 1 1 0 0 0 0 1]) => \a)
