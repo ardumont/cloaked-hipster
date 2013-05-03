@@ -8,27 +8,27 @@
 ;; head - most significant [0 0 0 0 0 1 1 1] - least significant - tail
 ;; [0 0 0 0 0 1 1 1] reads 7
 
-(defn- comp-bit-sequence
-  "Complement a bit sequence by providing the policy through the comp-fn function."
-  [n b comp-fn]
-  (->> (iterate comp-fn b)
+(defn- comp-bits-sequence
+  "Complement a bits sequence by providing the policy through the complement-fn function."
+  [n b complement-fn]
+  (->> (iterate complement-fn b)
        (drop-while #(not= n (count %)))
        first))
 
 (fact
-  (comp-bit-sequence 8  [1 1 1]           (partial concat [0])) => [0 0 0 0 0 1 1 1]
-  (comp-bit-sequence 8  [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 1 0 0 0]
-  (comp-bit-sequence 4  [1 1 1]           (partial concat [0])) => [0 1 1 1]
-  (comp-bit-sequence 10 [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 0 0 1 0 0 0]
-  (comp-bit-sequence 8  [1 1 1]           #(concat % [0]))      => [1 1 1 0 0 0 0 0]
-  (comp-bit-sequence 8  [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0]
-  (comp-bit-sequence 4  [1 1 1]           #(concat % [0]))      => [1 1 1 0]
-  (comp-bit-sequence 10 [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0 0 0])
+  (comp-bits-sequence 8  [1 1 1]           (partial concat [0])) => [0 0 0 0 0 1 1 1]
+  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 4  [1 1 1]           (partial concat [0])) => [0 1 1 1]
+  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 8  [1 1 1]           #(concat % [0]))      => [1 1 1 0 0 0 0 0]
+  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 4  [1 1 1]           #(concat % [0]))      => [1 1 1 0]
+  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0 0 0])
 
 (defn comp-before
-  "Complement by the most significant side (head) a bit sequence to n bits (if necessary)."
+  "Complement by the most significant side (head) a bits sequence to n bits (if necessary)."
   [n b]
-  (comp-bit-sequence n b (partial concat [0])))
+  (comp-bits-sequence n b (partial concat [0])))
 
 (fact
   (comp-before 8 [1 1 1])            => [0 0 0 0 0 1 1 1]
@@ -37,46 +37,47 @@
   (comp-before 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 0 0 1 0 0 0])
 
 (defn comp-after
-  "Complement by the least significant side (tail) a bit sequence to n bits (if necessary)."
+  "Complement by the least significant side (tail) a bits sequence to n bits (if necessary)."
   [n b]
-  (comp-bit-sequence n b #(concat % [0])))
+  (comp-bits-sequence n b #(concat % [0])))
 
 (fact
-  (comp-after 10 [1 1 1 1 1 1 1 1])  => [1 1 1 1 1 1 1 1 0 0]
+  (comp-after 10 [1 1 1 1 1 1 1 1]) => [1 1 1 1 1 1 1 1 0 0]
   (comp-after 8 [1 1 1])            => [1 1 1 0 0 0 0 0]
   (comp-after 8 [0 0 0 0 1 0 0 0])  => [0 0 0 0 1 0 0 0]
   (comp-after 4 [1 1 1])            => [1 1 1 0]
   (comp-after 10 [0 0 0 0 1 0 0 0]) => [0 0 0 0 1 0 0 0 0 0])
 
 (defn- bin
-  "Convert a number into binary sequence (will create as much bits as needed)."
-  [n]
-  (if (= 0 n)
+  "Convert a byte into binary sequence (will create as much bits as needed)."
+  [b]
+  (if (= 0 b)
     []
-    (concat (-> n (/ 2) int bin)
-            [(mod n 2)])))
+    (concat (-> b (/ 2) int bin)
+            [(mod b 2)])))
 
 (fact
-  (bin 97) => [1 1 0 0 0 0 1]
-  (bin 2)  => [1 0])
+  (bin 97)  => [1 1 0 0 0 0 1]
+  (bin 2)   => [1 0]
+  (bin 255) => [1 1 1 1 1 1 1 1])
 
 (defn- to-binary
-  "Given a number, compute a function permitting the translation into a n-bits sequence"
-  [n]
-  (comp (partial comp-before n) bin))
+  "Given a number, compute a function permitting the translation into a n-bits words binary sequence."
+  [b]
+  (comp (partial comp-before b) bin))
 
 (fact
   ((to-binary 8) 97) => [0 1 1 0 0 0 0 1]
   ((to-binary 8) 2)  => [0 0 0 0 0 0 1 0])
 
-(def to-8bits ^{:doc "Given a number, compute its 8-bits representation."}
+(def to-8bits ^{:doc "Given a byte, compute its 8-bits word binary sequence."}
   (to-binary 8))
 
 (fact
   (to-8bits 97) => [0 1 1 0 0 0 0 1]
   (to-8bits 2)  => [0 0 0 0 0 0 1 0])
 
-(def to-6bits ^{:doc "Given a number, compute its 6-bits representation."}
+(def to-6bits ^{:doc "Given a byte, compute its 6-bits word binary sequence."}
   (to-binary 6))
 
 (fact
