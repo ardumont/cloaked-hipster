@@ -1,6 +1,6 @@
 (ns crypto.dico
   "A dictionary namespace"
-  (:use [midje.sweet :only [fact future-fact]]))
+  (:require [midje.sweet :as m]))
 
 (def ^{:doc "base64 dictionary to encode in base64"}
   base64 {0  \A
@@ -72,13 +72,13 @@
   [m]
   (into {} (map (fn [[k v]] [v k]) m)))
 
-(fact
+(m/fact
   (return-map {:a :b :c :d})              => {:b :a :d :c}
   (return-map (return-map {:a :b :c :d})) => {:a :b :c :d})
 
 (def ^{:doc "base64 dictionary to decode in base64"}
   base64-dec (return-map base64))
 
-(fact
+(m/fact
   (return-map base64)     => base64-dec
   (return-map base64-dec) => base64)
