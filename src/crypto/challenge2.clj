@@ -24,15 +24,39 @@ The string:
   (xor-with-checks "abc" "defv")                                                                  => (m/throws AssertionError "Assert failed: (= (count h0) (count h1))")
   (xor-with-checks "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965") => "746865206b696420646f6e277420706c6179")
 
+(def hex-to-bits ^{:private true
+                   :doc "hexadecimal to bits"}
+  (comp byte/to-bits hex/to-bytes))
+
+(m/fact
+  (hex-to-bits (hex/encode "abc")) => [0 1 1 0 0 0 0 1,
+                                       0 1 1 0 0 0 1 0,
+                                       0 1 1 0 0 0 1 1])
+
+(defn- bitxor
+  "Apply bit-xor to the seq using key as the key"
+  [seq key]
+  (map bit-xor seq key))
+
+(m/fact
+  (bitxor [0 0 0 0 1 1 1 1] [0 0 0 0 1 1 1 1])         => [0 0 0 0 0 0 0 0]
+  (bitxor [0 0 0 0 1 1 1 1] [1 1 1 1 1 1 1 1])         => [1 1 1 1 0 0 0 0]
+  (bitxor [0 0 0 0 1 1 1 1] [1 1 1 1 0 0 0 0])         => [1 1 1 1 1 1 1 1]
+  (bitxor [1 1 1 1 1 1 1 1] [1 1 1 1 0 0 0 0])         => [0 0 0 0 1 1 1 1]
+  (apply bitxor [[0 0 0 0 1 1 1 1] [1 1 1 1 1 1 1 1]]) => [1 1 1 1 0 0 0 0])
+
 (defn xor
   "Compute xor of 2 hex strings"
   [h0 h1]
   (->> [h0 h1]
-       (map (comp byte/to-bits hex/to-bytes))
-       (apply map bit-xor)
+       (map hex-to-bits)
+       (apply bitxor)
        (partition 8)
        (map binary/to-bytes)
        hex/encode))
 
 (m/fact :one-way
   (xor "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965") => "746865206b696420646f6e277420706c6179")
+
+(m/future-fact :way-back
+  (xor "746865206b696420646f6e277420706c6179" "686974207468652062756c6c277320657965") => "1c0111001f010100061a024b53535009181c")
