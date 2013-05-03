@@ -83,14 +83,25 @@
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
   (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
 
+(defn- encode-bits
+  "Encode 8-bits word binary sequence into base64"
+  [b]
+  (->> b
+       (partition-all 24)  ;; 24-bits chunks
+       (mapcat to-base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
+       (s/join "")))
+
+(fact
+  (encode-bits (to-bits "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
+  (encode-bits (to-bits "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
+  (encode-bits (to-bits "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
+
 (defn encode
   "Encode into base64"
   [s]
   (->> s
-       to-bits             ;; Transform all chars into 8-bits sequence
-       (partition-all 24)  ;; 24-bits chunks
-       (mapcat to-base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
-       (s/join "")))
+       to-bits  ;; Transform all chars into 8-bits word binary sequence
+       encode-bits))
 
 (fact
   (encode "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
