@@ -8,39 +8,16 @@ The string:
 ... should produce:
  746865206b696420646f6e277420706c6179 - hex encoded (the kids don't play)"
   (:require [midje.sweet       :as m]
-            [crypto.byte       :as byte]
             [crypto.binary     :as binary]
-            [crypto.ascii      :as ascii]
-            [crypto.base64     :as b64]
-            [crypto.hex        :as hex]))
-
-(def hex-to-bits ^{:private true
-                   :doc "hexadecimal to bits"}
-  (comp byte/to-bits hex/to-bytes))
-
-(m/fact
-  (hex-to-bits (hex/encode "abc")) => [0 1 1 0 0 0 0 1,
-                                       0 1 1 0 0 0 1 0,
-                                       0 1 1 0 0 0 1 1])
-
-(defn- bitxor
-  "Apply bit-xor to the seq using key as the key"
-  [seq key]
-  (map bit-xor seq key))
-
-(m/fact
-  (bitxor [0 0 0 0 1 1 1 1] [0 0 0 0 1 1 1 1])         => [0 0 0 0 0 0 0 0]
-  (bitxor [0 0 0 0 1 1 1 1] [1 1 1 1 1 1 1 1])         => [1 1 1 1 0 0 0 0]
-  (bitxor [0 0 0 0 1 1 1 1] [1 1 1 1 0 0 0 0])         => [1 1 1 1 1 1 1 1]
-  (bitxor [1 1 1 1 1 1 1 1] [1 1 1 1 0 0 0 0])         => [0 0 0 0 1 1 1 1]
-  (apply bitxor [[0 0 0 0 1 1 1 1] [1 1 1 1 1 1 1 1]]) => [1 1 1 1 0 0 0 0])
+            [crypto.hex        :as hex]
+            [crypto.xor        :as xor]))
 
 (defn xor
   "Compute xor of 2 hex strings"
   [h0 h1]
   (->> [h0 h1]
-       (map hex-to-bits)
-       (apply bitxor)
+       (map hex/to-bits)
+       (apply xor/bitxor)
        (partition 8)
        (map binary/to-bytes)
        hex/encode))

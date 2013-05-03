@@ -81,3 +81,12 @@
   (decode "746865206b696420646f6e277420706c6179")                                                             => "the kid don't play"
   (decode "6861736b656c6c20726f636b7321")                                                                     => "haskell rocks!"
   (decode "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d") => "I'm killing your brain like a poisonous mushroom")
+
+(def to-bits ^{:private true
+                   :doc "hexadecimal to bits"}
+  (comp byte/to-bits to-bytes))
+
+(m/fact
+  (to-bits (encode "abc")) => [0 1 1 0 0 0 0 1,
+                               0 1 1 0 0 0 1 0,
+                               0 1 1 0 0 0 1 1])
