@@ -1,4 +1,4 @@
-(ns crypto.challenge2
+(ns crypto.c2
   "2. Fixed XOR
 Write a function that takes two equal-length buffers (hex encoded) and produces their XOR sum.
 The string:

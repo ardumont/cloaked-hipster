@@ -1,4 +1,4 @@
-(ns crypto.challenge4
+(ns crypto.c4
   "4. Detect single-character XOR
 One of the 60-character strings at:
   https://gist.github.com/3132713

@@ -1,4 +1,4 @@
-(ns crypto.challenge4
+(ns crypto.c5
   "5. Repeating-key XOR Cipher
 Write the code to encrypt the string:
   Burning 'em, if you ain't quick and nimble
