@@ -1,8 +1,10 @@
 (ns crypto.xor
   "xor computations"
-  (:require [midje.sweet :as m]
-            [crypto.hex  :as hex]
-            [crypto.binary :as binary]))
+  (:require [midje.sweet      :as m]
+            [crypto.hex       :as hex]
+            [crypto.binary    :as binary]
+            [crypto.frequency :as frequency]
+            [crypto.byte      :as byte]))
 
 (defn bitxor
   "Apply bit-xor to the seq using key as the key"
@@ -72,3 +74,50 @@
             :msg (encrypt {:key "a"
                            :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"})})
   => "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted")
+
+(defn decrypt-brute-force
+  "Decrypt by brute forcing"
+  [hex-encrypted-secret]
+  (->> (range 0 255)                                              ;; generate all possible characters
+       (map (comp
+             (fn [k] [k (xor hex-encrypted-secret k)])
+             byte/to-hex))                                        ;; compute the character's byte representation then xor it with the fixed hex encrypted secret
+       (reduce
+        (fn [m [k x :as r]]
+           (assoc m (frequency/compute-diff x) r))                ;; compute the frequency for each possible xor'd results into a sorted map (by its key)
+        (sorted-map))
+       first                                                      ;; first element is the smallest frequency difference
+       second                                                     ;; second element is our [k xor-string-with-k]
+       (map hex/decode)))                                         ;; decode key and value
+
+(m/fact
+  (decrypt-brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+  => ["X" "Cooking MC's like a pound of bacon"])
+
+(m/fact :using-my-own-food
+  (-> {:key "X"
+       :msg "Cooking MC's like a pound of bacon"}
+      encrypt
+      decrypt-brute-force)
+  => ["X" "Cooking MC's like a pound of bacon"])
+
+(m/fact :other-checking-to-bullet-proof
+  (-> {:key "a"
+       :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"}
+      encrypt
+      decrypt-brute-force)
+  => ["a" "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"])
+
+(m/fact :other-checking-to-bullet-proof
+  (-> {:key "z"
+       :msg "There are no more trouble in paradise"}
+      encrypt
+      decrypt-brute-force)
+  => ["z" "There are no more trouble in paradise"])
+
+(m/fact :other-checking-to-bullet-proof
+  (-> {:key " "
+       :msg "hello dude"}
+      encrypt
+      decrypt-brute-force)
+  => [" " "hello dude"])

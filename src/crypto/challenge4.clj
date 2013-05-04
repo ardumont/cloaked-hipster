@@ -3,10 +3,10 @@
 One of the 60-character strings at:
   https://gist.github.com/3132713
 has been encrypted by single-character XOR. Find it. (Your code from #3 should help.)"
-  (:require [midje.sweet       :as m]
-            [crypto.challenge3 :as c3]
-            [crypto.char       :as char]
-            [clojure.string    :as s]))
+  (:require [midje.sweet    :as m]
+            [crypto.char    :as char]
+            [crypto.xor     :as xor]
+            [clojure.string :as s]))
 
 (defn load-words
   "Given a file, load the content of the file and return each line into a vector of lines"
@@ -21,7 +21,7 @@ has been encrypted by single-character XOR. Find it. (Your code from #3 should h
   "Compute from a list of words"
   [words]
   (->> words
-       (map (fn [w] [w (c3/decrypt-brute-force w)]))
+       (map (fn [w] [w (xor/decrypt-brute-force w)]))
        (filter (fn [[_ [_ decrypted-sentence] :as all]]
                  (char/sentence? decrypted-sentence)))))
 
