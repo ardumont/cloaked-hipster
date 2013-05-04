@@ -4,21 +4,25 @@
             [crypto.byte :as byte]
             [clojure.set :as set]
             [crypto.char :as char]
-            [crypto.hex  :as hex]))
+            [crypto.hex  :as hex]
+            [crypto.util :as util]))
 
 (def ^{:doc "English letter frequency - http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html"}
   frequency
-  {\e 12.02    \t 9.10     \a 8.12     \o 7.68
-   \i 7.31     \n 6.95     \s 6.28     \r 6.02
-   \h 5.92     \d 4.32     \l 3.98     \u 2.88
-   \c 2.71     \m 2.61     \f 2.30     \y 2.11
-   \w 2.09     \g 2.03     \p 1.82     \b 1.49
-   \v 1.11     \k 0.69     \x 0.17     \q 0.11
-   \j 0.10     \z 0.07})
+  (into {} [[\e 12.02] [\E 12.02] [\t 9.10] [\T 9.10] [\a 8.12] [\A 8.12] [\o 7.68] [\O 7.68]
+            [\i 7.31] [\I 7.31] [\n 6.95] [\N 6.95] [\s 6.28] [\S 6.28] [\r 6.02] [\R 6.02]
+            [\h 5.92] [\H 5.92] [\d 4.32] [\D 4.32] [\l 3.98] [\L 3.98] [\u 2.88] [\U 2.88]
+            [\c 2.71] [\C 2.71] [\m 2.61] [\M 2.61] [\f 2.30] [\F 2.30] [\y 2.11] [\Y 2.11]
+            [\w 2.09] [\W 2.09] [\g 2.03] [\G 2.03] [\p 1.82] [\P 1.82] [\b 1.49] [\B 1.49]
+            [\v 1.11] [\V 1.11] [\k 0.69] [\K 0.69] [\x 0.17] [\X 0.17] [\q 0.11] [\Q 0.11]
+            [\j 0.10] [\J 0.10] [\z 0.07] [\Z 0.07]]))
 
 (m/fact
-  (->> (range 97 123)
-       (map (comp frequency char)))
+  (->> (util/range-char \a \z)
+       (map frequency))
+  => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07]
+  (->> (util/range-char \A \Z)
+       (map frequency))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
 (def hex-frequency ^{:doc "frequency of english, key are encoded into hexadecimal"}
@@ -28,8 +32,11 @@
    frequency))
 
 (m/fact
-  (->> (range 97 123)
+  (->> (util/range \a \z)
        (map (comp hex-frequency byte/to-hex)))
+  => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07]
+    (->> (util/range \A \Z)
+         (map (comp hex-frequency byte/to-hex)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
 (defn- compute-freq
@@ -80,7 +87,7 @@
        sum-diff-map))
 
 (m/fact
-  (compute-frequency-diff (hex/encode "hello")) => 98.98999998509882)
+  (compute-frequency-diff (hex/encode "hello")) => 198.97999998509886)
 
 (comment :some-tryout-from-the-repl
   (hex-frequency "77")
