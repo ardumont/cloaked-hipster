@@ -20,11 +20,11 @@ Tune your algorithm until this works."
 
 (defn decrypt
   "Decrypt by brute forcing"
-  [s]
-  (->> (range 0 255)                                              ;; generate all possible char
+  [hex-encrypted-secret]
+  (->> (range 0 255)                                              ;; generate all possible characters
        (map (comp
-             (fn [key] [key (c2/xor s key)])
-             byte/to-hex))                                        ;; compute its byte representation and xor it with the inputt
+             (fn [k] [k (c2/xor hex-encrypted-secret k)])
+             byte/to-hex))                                        ;; compute the character's byte representation then xor it with the fixed hex encrypted secret
        (reduce
         (fn [m [k x :as r]]
            (assoc m (frequency/compute-diff x) r))                ;; compute the frequency for each possible xor'd results into a sorted map (by its key)
