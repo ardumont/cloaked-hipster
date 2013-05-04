@@ -5,7 +5,8 @@ One of the 60-character strings at:
 has been encrypted by single-character XOR. Find it. (Your code from #3 should help.)"
   (:require [midje.sweet       :as m]
             [crypto.challenge3 :as c3]
-            [crypto.char       :as char]))
+            [crypto.char       :as char]
+            [clojure.string    :as s]))
 
 (defn load-words
   "Given a file, load the content of the file and return each line into a vector of lines"
