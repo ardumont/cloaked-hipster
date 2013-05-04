@@ -35,13 +35,14 @@
 (defn- compute-freq
   "Compute the frequency of hexadecimal characters inside a string."
   [s]
-  (->> s
-       (partition 2)
-       frequencies
-       (reduce
-        (fn [m [k v]]
-          (assoc m (clojure.string/join "" k) (float (/ v (count s)))))
-        {})))
+  (let [l (/ (count s) 2)]
+    (->> s
+         (partition 2)
+         frequencies
+         (reduce
+          (fn [m [k v]]
+            (assoc m (clojure.string/join "" k) (float (/ v l))))
+          {}))))
 
 (m/future-fact :does-not-understand-why-this-does-work-yet
   (compute-freq (hex/encode "hello")) => (m/just {"6f" 0.1, "6c" 0.2, "65" 0.1, "68" 0.1}))
@@ -79,7 +80,7 @@
        sum-diff-map))
 
 (m/fact
-  (compute-frequency-diff (hex/encode "hello")) => 99.4899999925494)
+  (compute-frequency-diff (hex/encode "hello")) => 98.98999998509882)
 
 (comment :some-tryout-from-the-repl
   (hex-frequency "77")
