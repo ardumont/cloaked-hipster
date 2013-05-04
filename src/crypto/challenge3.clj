@@ -18,6 +18,17 @@ Tune your algorithm until this works."
             [crypto.hex        :as hex]
             [crypto.frequency  :as frequency]))
 
+(defn encrypt
+  "Given a map {:key 'ascii key' :msg 'ascii message'}, encode the key message into hexadecimal then encrypt the hex msg with the hex key."
+  [{:keys [key msg]}]
+  (->> [msg key]
+       (map hex/encode)
+       (apply c2/xor)))
+
+(m/fact
+  (encrypt {:key "X"
+            :msg "Cooking MC's like a pound of bacon"}) => "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+
 (defn decrypt
   "Decrypt by brute forcing"
   [hex-encrypted-secret]
@@ -38,16 +49,16 @@ Tune your algorithm until this works."
   => ["X" "Cooking MC's like a pound of bacon"])
 
 (m/fact :using-my-own-food
-  (->> ["Cooking MC's like a pound of bacon" "X"]
-       (map hex/encode)
-       (apply c2/xor)
-       decrypt)
+  (-> {:key "X"
+       :msg "Cooking MC's like a pound of bacon"}
+      encrypt
+      decrypt)
   => ["X" "Cooking MC's like a pound of bacon"])
 
 (m/fact :other-checking-to-bullet-proof
-  (->> ["There are some trouble in paradise, the sentence needs to be very long for it to be decrypted" "a"]
-       (map hex/encode)
-       (apply c2/xor)
+  (->> {:key "a"
+        :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"}
+       encrypt
        decrypt)
   => ["a" "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"])
 
