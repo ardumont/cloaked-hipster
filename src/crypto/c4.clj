@@ -6,16 +6,10 @@ has been encrypted by single-character XOR. Find it. (Your code from #3 should h
   (:require [midje.sweet    :as m]
             [crypto.char    :as char]
             [crypto.xor     :as xor]
-            [clojure.string :as s]))
+            [clojure.string :as s]
+            [crypto.file    :as file]))
 
-(defn load-words
-  "Given a file, load the content of the file and return each line into a vector of lines"
-  [f]
-  (-> f
-      slurp
-      s/split-lines))
-
-(def words (load-words "./resources/encrypted-words.txt"))
+(def words (file/load "./resources/encrypted-words.txt"))
 
 (defn compute
   "Compute from a list of words"
