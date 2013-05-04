@@ -81,10 +81,18 @@ Tune your algorithm until this works."
 
 (m/fact :other-checking-to-bullet-proof
   (->> {:key "z"
-        :msg "There are some trouble in paradise"}
+        :msg "There are no more trouble in paradise"}
        encrypt
        decrypt-brute-force)
-  => ["z" "There are some trouble in paradise"])
+  => ["z" "There are no more trouble in paradise"])
+
+(m/fact :other-checking-to-bullet-proof
+  (->> {:key " "
+        :msg "hello dude"}
+       encrypt
+       decrypt-brute-force)
+  => [" " "hello dude"])
+
 (comment :some-repl-tryout
   (def s "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
