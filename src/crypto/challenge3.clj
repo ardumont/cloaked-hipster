@@ -30,6 +30,23 @@ Tune your algorithm until this works."
             :msg "Cooking MC's like a pound of bacon"}) => "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
 (defn decrypt
+  "Given a map {:key 'ascii key' :msg 'ascii message'}, decode the encrypted message."
+  [{:keys [key msg]}]
+  (->> [msg (hex/encode key)]
+       (apply c2/xor)
+       hex/decode))
+
+(m/fact
+  (decrypt {:key "X"
+            :msg (encrypt {:key "X"
+                           :msg "Cooking MC's like a pound of bacon"})})
+  => "Cooking MC's like a pound of bacon"
+  (decrypt {:key "a"
+            :msg (encrypt {:key "a"
+                           :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"})})
+  => "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted")
+
+(defn decrypt-brute-force
   "Decrypt by brute forcing"
   [hex-encrypted-secret]
   (->> (range 0 255)                                              ;; generate all possible characters
@@ -45,23 +62,29 @@ Tune your algorithm until this works."
        (map hex/decode)))                                         ;; decode key and value
 
 (m/fact
-  (decrypt "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+  (decrypt-brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
   => ["X" "Cooking MC's like a pound of bacon"])
 
 (m/fact :using-my-own-food
   (-> {:key "X"
        :msg "Cooking MC's like a pound of bacon"}
       encrypt
-      decrypt)
+      decrypt-brute-force)
   => ["X" "Cooking MC's like a pound of bacon"])
 
 (m/fact :other-checking-to-bullet-proof
   (->> {:key "a"
         :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"}
        encrypt
-       decrypt)
+       decrypt-brute-force)
   => ["a" "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"])
 
+(m/fact :other-checking-to-bullet-proof
+  (->> {:key "z"
+        :msg "There are some trouble in paradise"}
+       encrypt
+       decrypt-brute-force)
+  => ["z" "There are some trouble in paradise"])
 (comment :some-repl-tryout
   (def s "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
