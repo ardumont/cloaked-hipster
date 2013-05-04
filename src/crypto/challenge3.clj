@@ -40,7 +40,7 @@ Tune your algorithm until this works."
         (fn [m [k x :as r]]
            (assoc m (frequency/compute-diff x) r))                ;; compute the frequency for each possible xor'd results into a sorted map (by its key)
         (sorted-map))
-       first                                                      ;; first element is the least frequency difference
+       first                                                      ;; first element is the smallest frequency difference
        second                                                     ;; second element is our [k xor-string-with-k]
        (map hex/decode)))                                         ;; decode key and value
 
