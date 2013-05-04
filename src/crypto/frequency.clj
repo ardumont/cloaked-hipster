@@ -87,7 +87,7 @@
        sum-diff-map))
 
 (m/fact
-  (compute-frequency-diff (hex/encode "hello")) => 198.97999998509886)
+  (compute-diff (hex/encode "hello")) => 199.07999998509885)
 
 (comment :some-tryout-from-the-repl
   (hex-frequency "77")
