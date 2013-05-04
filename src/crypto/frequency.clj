@@ -71,7 +71,7 @@
 (m/fact
   (sum-diff-map {:a 1 :b 2 :c 3}) => 6)
 
-(defn compute-frequency-diff
+(defn compute-diff
   "Given a hexadecimal encoded word, compute the difference frequency from the standard english frequency map."
   [w]
   (->> w

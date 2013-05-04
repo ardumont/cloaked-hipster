@@ -27,7 +27,7 @@ Tune your algorithm until this works."
              byte/to-hex))                                        ;; compute its byte representation and xor it with the inputt
        (reduce
         (fn [m [k x :as r]]
-           (assoc m (frequency/compute-frequency-total x) r))     ;; compute the frequency for each possible xor'd results into a sorted map (by its key)
+           (assoc m (frequency/compute-diff x) r))                ;; compute the frequency for each possible xor'd results into a sorted map (by its key)
         (sorted-map))
        first                                                      ;; first element is the least frequency difference
        second                                                     ;; second element is our [k xor-string-with-k]
@@ -36,14 +36,22 @@ Tune your algorithm until this works."
 (m/fact
   (decrypt "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
   => ["X" "Cooking MC's like a pound of bacon"])
-(m/fact
+
+(m/fact :using-my-own-food
   (->> ["Cooking MC's like a pound of bacon" "X"]
        (map hex/encode)
        (apply c2/xor)
        decrypt)
   => ["X" "Cooking MC's like a pound of bacon"])
 
-(comment
+(m/fact :other-checking-to-bullet-proof
+  (->> ["There are some trouble in paradise, the sentence needs to be very long for it to be decrypted" "a"]
+       (map hex/encode)
+       (apply c2/xor)
+       decrypt)
+  => ["a" "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"])
+
+(comment :some-repl-tryout
   (def s "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
   (->> (range 0 255)
