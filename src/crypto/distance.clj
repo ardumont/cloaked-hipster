@@ -14,5 +14,6 @@
        (apply +)))                                   ;; compute the sum
 
 (m/fact
+  (hamming [\t \h \i \s] [\t \h \a \t])       => 4
   (hamming "this" "is a test for exception")  => (m/throws AssertionError "Assert failed: (= (count s0) (count s1))")
   (hamming "this is a test" "wokka wokka!!!") => 37)
