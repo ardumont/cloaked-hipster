@@ -3,7 +3,7 @@
   (:use [midje.sweet :only [fact]])
   (:require [midje.sweet    :as m]
             [crypto.dico    :as d]
-            [crypto.binary  :as b]
+            [crypto.binary  :as binary]
             [crypto.byte    :as byte]
             [crypto.ascii   :as ascii]
             [clojure.string :as s]))
@@ -14,7 +14,7 @@
 (defmulti comp24 count)
 
 ;; complement 4 bits to be able to have 2 bytes (12 bits) and we complements with 2 = chars
-(defmethod comp24 8 [b] [(b/comp-after 12 b)
+(defmethod comp24 8 [b] [(binary/comp-after 12 b)
                          [\= \=]])
 
 (m/fact
@@ -23,7 +23,7 @@
                                  [\= \=]])
 
 ;; complement 2 bits to be able to have 3 bytes (18 bits) and we complements with 1 = char
-(defmethod comp24 16 [b] [(b/comp-after 18 b)
+(defmethod comp24 16 [b] [(binary/comp-after 18 b)
                           [\=]])
 
 (m/fact
@@ -48,7 +48,7 @@
   (let [[part complement] (comp24 b)
         p24               (->> part
                                (partition 6)
-                               (map (comp d/base64 b/to-bytes)))]
+                               (map (comp d/base64 binary/to-bytes)))]
     (concat p24 complement)))
 
 (m/fact
@@ -96,7 +96,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; decoding
 
 (def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
-  (comp b/to-6bits d/base64-dec))
+  (comp binary/to-6bits d/base64-dec))
 
 (m/fact
   (decode-b64char \a) => [0 1 1 0 1 0]
@@ -146,7 +146,7 @@
        (partition 4)         ;; 4 words (32 bits)
        (mapcat decode4)      ;; decoded into 3 bytes (24 bits)
        (partition 8)         ;; spliced into byte word (8 bits)
-       (map ascii/bits2char) ;; converted back into char
+       (map binary/to-char)  ;; converted back into char
        (s/join "")))         ;; then joined to form a string
 
 (m/fact

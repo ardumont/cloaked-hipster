@@ -61,7 +61,7 @@
   (bin 2)   => [1 0]
   (bin 255) => [1 1 1 1 1 1 1 1])
 
-(defn- to-binary
+(defn to-binary
   "Given a number, compute a function permitting the translation into a n-bits words binary sequence."
   [b]
   (comp (partial comp-before b) bin))
@@ -101,3 +101,10 @@
   (to-bytes [0 0 0 0 0 0 0 0]) => 0
   (to-bytes [1 1 1 1 1 1 1 1]) => 255
   (to-bytes [1 1 1 1 1 1 1 0]) => 254)
+
+(def to-char ^{:private true
+                 :doc "Convert a 8-bits sequence into a char"}
+  (comp char to-bytes))
+
+(m/fact
+  (to-char [0 1 1 0 0 0 0 1]) => \a)
