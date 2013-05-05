@@ -2,16 +2,44 @@
   "A distance namespace"
   (:require [midje.sweet   :as m]
             [crypto.ascii  :as ascii]
-            [crypto.binary :as binary]))
+            [crypto.binary :as binary]
+            [crypto.byte   :as byte]))
 
-(defn hamming
-  "hamming distance between 2 equal length strings."
+(defn hamming-bit
+  "hamming distance on bits sequence"
+  [by0 by1]
+  (->> [by0 by1]
+       (apply map (fn [b0 b1] (if (not= b0 b1) 1 0)))
+       (apply +)))
+
+(m/fact
+  (hamming-bit [1 0 0] [0 0 0]) => 1
+  (hamming-bit [0 0 0] [0 0 0]) => 0
+  (hamming-bit [0 0 0] [1 1 1]) => 3)
+
+(defmulti hamming "Compute the hamming distance between to equal strings or between 2 equal bytes sequence."
+  (fn [v0 v1]
+    (when (or (-> v0 string?)
+              (-> v0 first char?)) :str)))
+
+;; deal with byte
+(defmethod hamming :default
+  [by0 by1]
+  {:pre [(= (count by0) (count by1))]}
+  (->> [by0 by1]
+       (map byte/to-bits)    ;; transform into 2 sequences of bits
+       (apply hamming-bit))) ;; compare bit to bit
+
+(m/fact
+  (hamming (ascii/to-bytes "this") (ascii/to-bytes "is a test for exception"))  => (m/throws AssertionError "Assert failed: (= (count by0) (count by1))")
+  (hamming (ascii/to-bytes "this is a test") (ascii/to-bytes "wokka wokka!!!")) => 37)
+
+(defmethod hamming :str
   [s0 s1]
-  {:pre [(= (count s0) (count s1))]}                 ;; this version does not support string with different sizes
+  {:pre [(= (count s0) (count s1))]}        ;; this version does not support string with different sizes
   (->> [s0 s1]
-       (map (partial mapcat ascii/to-bits))          ;; transform into 2 sequences of bits
-       (apply map (fn [b0 b1] (if (not= b0 b1) 1 0))) ;; compare bit to bit
-       (apply +)))                                   ;; compute the sum
+       (map (partial mapcat ascii/to-bits)) ;; transform into 2 sequences of bits
+       (apply hamming-bit)))                ;; compare bit to bit
 
 (m/fact
   (hamming [\t \h \i \s] [\t \h \a \t])       => 4
