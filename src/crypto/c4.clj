@@ -9,8 +9,6 @@ has been encrypted by single-character XOR. Find it. (Your code from #3 should h
             [clojure.string :as s]
             [crypto.file    :as file]))
 
-(def words (file/load "./resources/encrypted-words.txt"))
-
 (defn compute
   "Compute from a list of words"
   [words]
@@ -20,13 +18,13 @@ has been encrypted by single-character XOR. Find it. (Your code from #3 should h
                  (char/sentence? decrypted-sentence)))))
 
 (m/future-fact :future-fact-to-avoid-the-long-time-computation-just-change-future-fact-into-fact
-  (-> "./resources/encrypted-words.txt"
-      load-words
+  (-> "./resources/encrypted-words"
+      file/load
       compute)
   => ["7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f" ["5" "Now that the party is jumping\n"]])
 
-;; crypto.challenge4> (-> "./resources/encrypted-words.txt"
-;;                        load-words
+;; crypto.challenge4> (-> "./resources/encrypted-words"
+;;                        file/load
 ;;                        compute)
 ;; (["7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f" ("5" "Now that the party is jumping\n")])
 
