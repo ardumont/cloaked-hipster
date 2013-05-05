@@ -83,11 +83,10 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   "Given a byte input and a key size, return the list of hex-encoded blocks with such size"
   [byte-input key-size]
   (->> byte-input
-       (partition key-size)
-       (map hex/encode)))
+       (partition key-size)))
 
 (comment
-  (potential-keys byte-input 2))
+  (all-blocks byte-input 2))
 
 (defn mean
   [vals]
@@ -109,12 +108,76 @@ e. For each block, the single-byte XOR key that produces the best looking histog
                            vals))]
     (all-blocks byte-input key-size)))
 
+(defn shift
+  "n-shift the sequence of data"
+  [n data]
+  (if (= 0 n)
+    data
+    (let [[h t] (split-at n data)]
+      (concat t h))))
+
+(m/fact
+  (shift 0 [:a :b])             => [:a :b]
+  (shift 3 [:a :b :c :d :e :f]) => [:d :e :f :a :b :c]
+  (shift 1 [:a :b :c :d :e :f]) => [:b :c :d :e :f :a])
+
+(defn inject-block
+  "Given an input of data, inject a block of data at the nth position"
+  [n block data]
+  (let [l (count block)]
+    (->> data
+         (shift n)
+         (interleave (cycle [block])))))
+
+(m/fact
+  ;; (inject-block 0 [1 2 3] [:a :b :c :d :e :f]) => [1 2 3 :a :b :c 1 2 3 :d :e :f]
+  ;; (inject-block 1 [1 2 3] [:a :b :c :d :e :f]) => [1 2 3 :d :e :f 1 2 3 :a :b :c]
+  ;; (inject-block 2 [1 2 3] [:a :b :c :d :e :f]) => [1 2 3 :a :b :c 1 2 3 :d :e :f]
+  ;; (inject-block 2 [1 2]   [:a :b :c :d :e :f]) => [1 2 :e :f 1 2 :a :b 1 2 :c :d]
+  (inject-block 0 [1 :a]  [[1 :a] [2 :b] [3 :c]]) => [[1 :a] [1 :a] [1 :a] [2 :b] [1 :a] [3 :c]]
+  (inject-block 1 [1 :a]  [[1 :a] [2 :b] [3 :c]]) => [[1 :a] [2 :b] [1 :a] [3 :c] [1 :a] [1 :a]]
+  (inject-block 2 [1 :a]  [[1 :a] [2 :b] [3 :c]]) => [[1 :a] [3 :c] [1 :a] [1 :a] [1 :a] [2 :b]])
+
+;; e. Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
+
+;; f. Now transpose the blocks: make a block that is the first byte of every block, and a block
+;; that is the second byte of every block, and so on.
+
+;; g. Solve each block as if it was single-character XOR. You already have code to do this.
+
+;; e. For each block, the single-byte XOR key that produces the best looking histogram is the
+;;  repeating-key XOR key byte for that block. Put them together and you have the key.
+
+(defn compute
+  "Given a blocks, compute all possible transpositions."
+  [blocks]
+  (->> blocks
+       (map-indexed
+        (fn [i k] (inject-block i k blocks)))))
+
+(m/fact
+  (compute [[1 :a] [3 :b] [5 :b]]) => [[[1 :a] [1 :a] [1 :a] [3 :b] [1 :a] [5 :b]]
+                                       [[3 :b] [3 :b] [3 :b] [5 :b] [3 :b] [1 :a]]
+                                       [[5 :b] [5 :b] [5 :b] [1 :a] [5 :b] [3 :b]]])
+
 (defn freq
   "For a given key, compute the frequencies of xor this key with all the other blocks"
   [key blocks]
   (->> (for [msg blocks]
          (xor/xor msg key))
        frequencies))
+
+;; Here's how to perform an attack that will break the trivial XOR encryption in a few minutes:
+
+;;     Determine how long the key is
+
+;; This is done by XORing the encrypted data with itself shifted various numbers of places, and examining how many bytes are the same. If the bytes that are equal are greater than a certain percentage (6% accoridng to Bruce Schneier's Applied Cryptography second edition), then you have shifted the data by a multiple of the keylength. By finding the smallest amount of shifting that results in a large amount of equal bytes, you find the keylength.
+
+;;     Shift the cipher text by the keylength, and XOR against itself.
+
+;; This removes the key and leaves you with the plaintext XORed with the plaintext shifted the length of the key. There should be enough plaintext to determine the message content.
+
+;; Section 8.2 of the Sci.crypt FAQ has more details on cracking repeated-key ciphers.
 
 (defn draw
   "Draw the bar chart for the given data {:col0 key :col1 freq-of-this-key} "
