@@ -7,13 +7,16 @@ has been encrypted by single-character XOR. Find it. (Your code from #3 should h
             [crypto.char    :as char]
             [crypto.xor     :as xor]
             [clojure.string :as s]
-            [crypto.file    :as file]))
+            [crypto.file    :as file]
+            [crypto.hex     :as hex]))
 
 (defn compute
   "Compute from a list of words"
   [words]
   (->> words
-       (map (fn [w] [w (xor/decrypt-brute-force w)]))
+       (map (comp
+             (fn [w] [w (xor/decrypt-brute-force w)])
+             hex/to-bytes))
        (filter (fn [[_ [_ decrypted-sentence] :as all]]
                  (char/sentence? decrypted-sentence)))))
 
@@ -21,21 +24,10 @@ has been encrypted by single-character XOR. Find it. (Your code from #3 should h
   (-> "./resources/encrypted-words"
       file/load
       compute)
-  => ["7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f" ["5" "Now that the party is jumping\n"]])
+  => [[[123 90 66 21 65 93 84 65 21 65 93 80 21 69 84 71 65 76 21 92 70 21 95 64 88 69 92 91 82 63] ["5" "Now that the party is jumping\n"]]])
 
-;; crypto.challenge4> (-> "./resources/encrypted-words"
-;;                        file/load
-;;                        compute)
-;; (["7b5a4215415d544115415d5015455447414c155c46155f4058455c5b523f" ("5" "Now that the party is jumping\n")])
-
-(comment :repl-tryout
-  (filter (fn [[_ [_ decrypted-sentence] :as all]]
-            (some #{\space} decrypted-sentence))
-          [["not filtered" ["1" "12345"]]
-           ["test" ["5" "Now that the party is jumping\n"]]])
-  (def r (->> words
-              (map (fn [w] [w (c3/decrypt-brute-force w)]))
-              (filter (fn [[_ [_ decrypted-sentence] :as all]]
-                        (char/sentence? decrypted-sentence)))))
-  ;; solution read at the repl
-  '("5" "Now that the party is jumping\n")  )
+;; crypto.c4> (time (-> "./resources/encrypted-words"
+;;                      file/load
+;;                      compute))
+;; "Elapsed time: 2.24091 msecs" <- misleading, do not take into account
+;; ([(123 90 66 21 65 93 84 65 21 65 93 80 21 69 84 71 65 76 21 92 70 21 95 64 88 69 92 91 82 63) ["5" "Now that the party is jumping\n"]])

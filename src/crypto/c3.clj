@@ -17,6 +17,8 @@ Tune your algorithm until this works."
             [crypto.base64     :as b64]
             [crypto.hex        :as hex]))
 
+(def brute-force (comp xor/decrypt-brute-force hex/to-bytes))
+
 (m/fact
-  (xor/decrypt-brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+  (brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
   => ["X" "Cooking MC's like a pound of bacon"])
