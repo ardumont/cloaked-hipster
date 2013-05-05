@@ -4,6 +4,7 @@
             [clojure.string :as s]))
 
 (defn load-simple
+  "Given a file, load its content and glue all lines together."
   [filepath]
   (-> filepath
       slurp
@@ -13,5 +14,5 @@
   "Given a file, load the content of the file and return each line into a vector of lines."
   [filepath]
   (-> filepath
-      load-simple
+      slurp
       s/split-lines))
