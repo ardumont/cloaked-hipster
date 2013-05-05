@@ -28,18 +28,19 @@ g. Solve each block as if it was single-character XOR. You already have code to 
 
 e. For each block, the single-byte XOR key that produces the best looking histogram is the
  repeating-key XOR key byte for that block. Put them together and you have the key."
-  (:require [midje.sweet     :as m]
-            [crypto.c1       :as c1]
-            [crypto.xor      :as xor]
-            [crypto.distance :as distance]
-            [crypto.file     :as file]
-            [crypto.byte     :as byte]
-            [crypto.ascii    :as ascii]
-            [crypto.hex      :as hex]
+  (:require [midje.sweet      :as m]
+            [crypto.c1        :as c1]
+            [crypto.xor       :as xor]
+            [crypto.distance  :as distance]
+            [crypto.file      :as file]
+            [crypto.byte      :as byte]
+            [crypto.ascii     :as ascii]
+            [crypto.hex       :as hex]
+            [crypto.frequency :as frequency]
             [incanter
-             [core     :as icore]
-             [charts   :as icharts]
-             [datasets :as idata]]))
+             [core            :as icore]
+             [charts          :as icharts]
+             [datasets        :as idata]]))
 
 (def byte-input (-> "./resources/base64-encoded"
                      file/load-simple
@@ -67,53 +68,78 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 (m/fact
   (normalize 2 (ascii/to-bytes "hello")) => 3/2)
 
-(defn potential-size
+(defn potential-key-sizes
   "Given the input, return the potential sizes (in natural order)"
-  [input]
+  [byte-input]
   (->> (range 2 41)
        (reduce
-        (fn [m n] (assoc m n (normalize n input)))
+        (fn [m n] (assoc m n (normalize n byte-input)))
         (sorted-map))))
 
-(defn freq
-  "Compute the frequencies from the n possible key"
-  [n input]
-  (let [size           (-> (potential-size input)
-                           ffirst)
-        potential-keys (->> input
-                            (partition size)
-                            (map (comp hex/encode ascii/to-bytes)))
-        k              (nth potential-keys n)]
-    (->> (for [msg potential-keys]
-           (xor/xor msg k))
-         frequencies
-         (into []))))
+(comment
+  (potential-key-sizes byte-input))
 
-(defn draw
-  [n input]
-  (->> input
-       (freq n)
-       ((fn [data] (icore/view
-                   (icharts/bar-chart :col-0 :col-1 :data (->> data
-                                                               icore/to-dataset)))))))
+(defn all-blocks
+  "Given a byte input and a key size, return the list of hex-encoded blocks with such size"
+  [byte-input key-size]
+  (->> byte-input
+       (partition key-size)
+       (map hex/encode)))
 
 (comment
-  (let [size           (-> (potential-size byte-input)
-                           ffirst)
-        potential-keys (->> byte-input
-                            (partition size)
-                            (map (comp hex/encode ascii/to-bytes)))
-        k              (nth potential-keys 1)]
-    (->> (for [msg potential-keys]
-           (xor/xor msg k))
-         frequencies
-         ((fn [data] (icore/view
-                     (icharts/bar-chart :col-0 :col-1 :data (->> data
-                                                                 (into [])
-                                                                 icore/to-dataset)))))))
+  (potential-keys byte-input 2))
 
-  (fn [data] (icore/view
-             (icharts/bar-chart :col-0 :col-1 :data (->> data
-                                                         (into [])
-                                                         icore/to-dataset))))
-  )
+(defn potential-keys
+  "Given the byte-input, compute the potential key size and return the list of those possible keys with such sizes."
+  [byte-input]
+  (let [key-size (ffirst (potential-key-sizes byte-input))]
+    (all-blocks byte-input key-size)))
+
+(defn freq
+  "For a given key, compute the frequencies of xor this key with all the other blocks"
+  [key blocks]
+  (->> (for [msg blocks]
+         (xor/xor msg key))
+       frequencies))
+
+(defn draw
+  "Draw the bar chart for the given data {:col0 key :col1 freq-of-this-key} "
+  [data]
+  (->> data
+       (into [])
+       ((fn [d]
+          (icore/view
+           (icharts/bar-chart
+            :col-0
+            :col-1
+            :data (icore/$where {:col-1 {:gt 0}}
+                                (->> d
+                                     icore/to-dataset))))))))
+
+(defn compute-and-draw
+  [key byte-input]
+  (->> byte-input
+       potential-keys
+       (freq key)
+       draw))
+
+(comment
+  (def all-data ^{:doc "all potential data to graph"}
+    (let [blocks (potential-keys byte-input)]
+      (map (fn [key] (freq key blocks)) blocks)))
+
+  (draw (nth all-data 255))
+
+  (let [blocks (potential-keys byte-input)]
+    (->> blocks
+         (map (fn [key] (freq key blocks)))
+         (filter (fn [m]
+                   (some #(< 5 %) (vals m))))))
+
+  ;; draw the bar-chart for the english standard frequency
+  (->> frequency/frequency
+       draw)
+
+  ;; given a potential key, compute and draw the diagram
+  (compute-and-draw "5752" byte-input)
+)
