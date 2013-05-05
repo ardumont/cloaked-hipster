@@ -50,7 +50,7 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 (defn block
   "Compute 2 n-block chars, [0..n] and [n..n+1]"
   [n s]
-  [(take n s) (take n (drop n s))])
+  [(take n s) (->> s (drop n) (take n))])
 
 (m/fact
   (block 3 (ascii/to-bytes "hello, dude")) => [[104 101 108] [108 111 44]]
