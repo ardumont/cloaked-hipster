@@ -89,10 +89,24 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 (comment
   (potential-keys byte-input 2))
 
+(defn mean
+  [vals]
+  (let [n 4]
+    (->
+     (->> vals (take n) (apply +))
+     (/ n)
+     float
+     Math/round)))
+
+(m/fact
+  (mean (-> byte-input potential-key-sizes vals)) => 2)
+
 (defn potential-keys
   "Given the byte-input, compute the potential key size and return the list of those possible keys with such sizes."
   [byte-input]
-  (let [key-size (ffirst (potential-key-sizes byte-input))]
+  (let [key-size (mean (-> byte-input
+                           potential-key-sizes
+                           vals))]
     (all-blocks byte-input key-size)))
 
 (defn freq
