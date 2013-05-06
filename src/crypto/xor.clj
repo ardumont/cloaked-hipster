@@ -19,7 +19,8 @@
   (bitxor [1 1 1 1 1 1 1 1] [1 1 1 1 0 0 0 0])         => [0 0 0 0 1 1 1 1]
   (apply bitxor [[0 0 0 0 1 1 1 1] [1 1 1 1 1 1 1 1]]) => [1 1 1 1 0 0 0 0])
 
-(defn xor-byte
+(defn- xor-byte
+  "Compute the xor between the input by (byte) and the key key (byte). No check on key."
   [by0 by1]
   (->> [by0 by1]
        (map byte/to-bits)
@@ -31,22 +32,8 @@
   (xor-byte [0 1 2 3 4 5] [0 1 2 3 4 5]) => [0 0 0 0 0 0]
   (xor-byte [0 0 0 0 0 0] [0 1 2 3 4 5]) => [0 1 2 3 4 5])
 
-(defn xor-hex
-  "Compute xor of 2 hex strings"
-  [h0 h1]
-  (->> [h0 h1]
-       (map hex/to-bits)
-       (apply bitxor)
-       (partition 8)
-       (map binary/to-bytes)
-       hex/encode))
-
-(m/fact :one-way-and-back
-  (xor-hex "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965") => "746865206b696420646f6e277420706c6179"
-  (xor-hex "746865206b696420646f6e277420706c6179" "686974207468652062756c6c277320657965") => "1c0111001f010100061a024b53535009181c")
-
 (defn xor
-  "Compute the xor of between the input s and the key key."
+  "Compute the xor between the input by (byte) and the key key (byte). The key is repeated if need be."
   [by key]
   (->> key
        cycle
