@@ -8,11 +8,11 @@ a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
 
 b. Write a function to compute the edit distance/Hamming distance between two strings.
 The Hamming distance is just the number of differing bits.
-The distance between: this is a test
-                 and: wokka wokka!!!
-                 is 37.
+The distance between: 'this is a test'
+                 and: 'wokka wokka!!!'
+                  is: 37
 
-c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [n+1..2*KEYSIZE] worth of bytes,
+c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth of bytes,
  and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
 
 d. The KEYSIZE with the smallest normalized edit distance is probably the key.
@@ -101,9 +101,8 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   [byte-input]
   (let [key-size (-> byte-input
                      potential-key-sizes
-                     vals
-                     first
-                     int)]
+                     keys
+                     first)]
     (all-blocks byte-input key-size)))
 
 (defn shift
@@ -122,32 +121,35 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 (defn inject-block
   "Given an input of data, inject a block of data at the nth position"
   [n block data]
-  (->> data
-       (map (fn [seq]
-              (->> seq
-                   (split-at n)
-                   (#(let [[h t] %]
-                       (concat h (conj t block))))
-                   flatten)))))
+  (let [l (-> block count inc)]
+    (->> data
+         (map (fn [seq]
+                (->> seq
+                     (split-at (mod n l))
+                     (#(let [[h t] %]
+                         (concat h (conj t block))))
+                     flatten))))))
 
 (m/fact
   (inject-block 0 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
   (inject-block 1 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 1 :a :a] [2 1 :a :b] [3 1 :a :c]]
   (inject-block 2 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [2 :b 1 :a] [3 :c 1 :a]]
+  (inject-block 3 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
   (inject-block 1 [2 :b] [[1 :a] [2 :b] [3 :c]]) => [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]]
   (inject-block 2 [3 :c] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]])
 
 (defn compute-possible-transpositions
   "Given a blocks, compute all possible transpositions."
   [blocks]
-  (->> blocks
-       (map-indexed
-        (fn [i k] (inject-block i k blocks)))))
+  (for [b blocks
+        i (range 0 (count blocks))]
+    (inject-block i b blocks)))
 
 (m/fact
-  (compute-possible-transpositions [[1 :a] [2 :b] [3 :c]]) => [[[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
-                                                               [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]]
-                                                               [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]]])
+  (compute-possible-transpositions [[1 :a] [2 :b] [3 :c]])
+  => [[[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]] [[1 1 :a :a] [2 1 :a :b] [3 1 :a :c]] [[1 :a 1 :a] [2 :b 1 :a] [3 :c 1 :a]]
+      [[2 :b 1 :a] [2 :b 2 :b] [2 :b 3 :c]] [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]] [[1 :a 2 :b] [2 :b 2 :b] [3 :c 2 :b]]
+      [[3 :c 1 :a] [3 :c 2 :b] [3 :c 3 :c]] [[1 3 :c :a] [2 3 :c :b] [3 3 :c :c]] [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]]])
 
 ;; f. Now transpose the blocks: make a block that is the first byte of every block, and a block
 ;; that is the second byte of every block, and so on.
@@ -159,15 +161,15 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 
 (comment
   (def blks (potential-keys byte-input))
-  (def blk (first blks))
 
   (def all-transposed-blocks (compute-possible-transpositions blks))
-  (ffirst all-transposed-blocks)
+
+  (nth blks 4)
+  (nth all-transposed-blocks 2)
 
   (def block-by-block
     (->> all-transposed-blocks
-         (map (fn [bl]
-                (map xor/decrypt-brute-force bl)))))
+         (map (partial map xor/decrypt-brute-force))))
 )
 
 (defn freq
