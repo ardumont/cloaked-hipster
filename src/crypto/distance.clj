@@ -15,7 +15,10 @@
 (m/fact
   (hamming-bit [1 0 0] [0 0 0]) => 1
   (hamming-bit [0 0 0] [0 0 0]) => 0
-  (hamming-bit [0 0 0] [1 1 1]) => 3)
+  (hamming-bit [0 0 0] [1 1 1]) => 3
+  (hamming-bit [1 0 1 1 1 0 1] [1 0 0 1 0 0 1]) => 2
+  (hamming-bit [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 1 0 1 1 1 0 1 1 0 1 1 1 1 0 1 1 1 0 0 1 0 0 1 1 0 0 1 0 0]
+               [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 0 0 1 0 0 0 1 1 1 0 1 0 1 0 1 1 0 0 1 0 0 0 1 1 0 0 1 0 1]))
 
 (defmulti hamming "Compute the hamming distance between to equal strings or between 2 equal bytes sequence."
   (fn [v0 v1]
@@ -27,12 +30,14 @@
   [by0 by1]
   {:pre [(= (count by0) (count by1))]}
   (->> [by0 by1]
-       (map byte/to-bits)    ;; transform into 2 sequences of bits
+       (map byte/to-bits)
        (apply hamming-bit))) ;; compare bit to bit
 
 (m/fact
   (hamming (ascii/to-bytes "this") (ascii/to-bytes "is a test for exception"))  => (m/throws AssertionError "Assert failed: (= (count by0) (count by1))")
-  (hamming (ascii/to-bytes "this is a test") (ascii/to-bytes "wokka wokka!!!")) => 37)
+  (hamming (ascii/to-bytes "this is a test") (ascii/to-bytes "wokka wokka!!!")) => 37
+  (hamming (ascii/to-bytes "hello dude") (ascii/to-bytes "hello word"))         => 10
+  (hamming (ascii/to-bytes "toned") (ascii/to-bytes "roses"))                   => 10)
 
 (defmethod hamming :str
   [s0 s1]
