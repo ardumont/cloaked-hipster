@@ -1,6 +1,5 @@
 (ns crypto.ascii
   "ascii manipulation"
-  (:use [midje.sweet :only [fact]])
   (:require [midje.sweet   :as m]
             [crypto.binary :as binary]))
 
@@ -19,4 +18,14 @@
   (comp binary/to-8bits int))
 
 (m/fact
-  (to-bits \a) => [0 1 1 0 0 0 0 1])
+  (to-bits \a) => [0 1 1 0 0 0 0 1]
+  (to-bits \t) => [0 1 1 1 0 1 0 0]
+  (to-bits \r) => [0 1 1 1 0 0 1 0]
+  (to-bits \o) => [0 1 1 0 1 1 1 1]
+  (to-bits \s) => [0 1 1 1 0 0 1 1]
+  (to-bits \e) => [0 1 1 0 0 1 0 1]
+  (to-bits \n) => [0 1 1 0 1 1 1 0]
+  (to-bits \d) => [0 1 1 0 0 1 0 0]
+
+  (mapcat to-bits "roses") => [0 1 1 1 0 0 1 0, 0 1 1 0 1 1 1 1, 0 1 1 1 0 0 1 1, 0 1 1 0 0 1 0 1, 0 1 1 1 0 0 1 1]
+  (mapcat to-bits "toned") => [0 1 1 1 0 1 0 0, 0 1 1 0 1 1 1 1, 0 1 1 0 1 1 1 0, 0 1 1 0 0 1 0 1, 0 1 1 0 0 1 0 0])

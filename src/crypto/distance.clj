@@ -9,7 +9,14 @@
   "hamming distance on bits sequence"
   [by0 by1]
   (->> [by0 by1]
-       (apply map (fn [b0 b1] (if (not= b0 b1) 1 0)))
+       (apply map (fn [b0 b1] (if (= b0 b1) 0 1)))
+       (apply +)))
+
+(let [[by0 by1] [[0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 1 0 1 1 1 0 1 1 0 1 1 1 1 0 1 1 1 0 0 1 0 0 1 1 0 0 1 0 0]
+                 [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 0 0 1 0 0 0 1 1 1 0 1 0 1 0 1 1 0 0 1 0 0 0 1 1 0 0 1 0 1]]
+      m {true 0}]
+  (->> [by0 by1]
+       (apply map (fn [b0 b1] (m (= b0 b1) 1)))
        (apply +)))
 
 (m/fact
@@ -18,7 +25,9 @@
   (hamming-bit [0 0 0] [1 1 1]) => 3
   (hamming-bit [1 0 1 1 1 0 1] [1 0 0 1 0 0 1]) => 2
   (hamming-bit [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 1 0 1 1 1 0 1 1 0 1 1 1 1 0 1 1 1 0 0 1 0 0 1 1 0 0 1 0 0]
-               [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 0 0 1 0 0 0 1 1 1 0 1 0 1 0 1 1 0 0 1 0 0 0 1 1 0 0 1 0 1]))
+               [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 0 0 1 0 0 0 1 1 1 0 1 0 1 0 1 1 0 0 1 0 0 0 1 1 0 0 1 0 1]) => 10
+  (hamming-bit [0 1 1 1 0 0 1 0 0 1 1 0 1 1 1 1 0 1 1 1 0 0 1 1 0 1 1 0 0 1 0 1 0 1 1 1 0 0 1 1]
+               [0 1 1 1 0 1 0 0 0 1 1 0 1 1 1 1 0 1 1 0 1 1 1 0 0 1 1 0 0 1 0 1 0 1 1 0 0 1 0 0]) => 10)
 
 (defmulti hamming "Compute the hamming distance between to equal strings or between 2 equal bytes sequence."
   (fn [v0 v1]
@@ -34,9 +43,11 @@
        (apply hamming-bit))) ;; compare bit to bit
 
 (m/fact
+  (hamming [0 0 1] [1 0 0])                                                     => 2
   (hamming (ascii/to-bytes "this") (ascii/to-bytes "is a test for exception"))  => (m/throws AssertionError "Assert failed: (= (count by0) (count by1))")
   (hamming (ascii/to-bytes "this is a test") (ascii/to-bytes "wokka wokka!!!")) => 37
-  (hamming (ascii/to-bytes "hello dude") (ascii/to-bytes "hello word"))         => 10
+  (hamming (ascii/to-bytes "this") (ascii/to-bytes "that"))                     => 4
+  (hamming (ascii/to-bytes "dude") (ascii/to-bytes "word"))                     => 10
   (hamming (ascii/to-bytes "toned") (ascii/to-bytes "roses"))                   => 10)
 
 (defmethod hamming :str
