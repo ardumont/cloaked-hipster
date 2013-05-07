@@ -37,6 +37,7 @@ e. For each block, the single-byte XOR key that produces the best looking histog
             [crypto.byte      :as byte]
             [crypto.ascii     :as ascii]
             [crypto.hex       :as hex]
+            [crypto.block     :as block]
             [crypto.frequency :as frequency]
             [crypto.char      :as char]
             [clojure.string   :as s]
@@ -51,47 +52,8 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 
 (def byte-input (hex/to-bytes hex-input))
 
-(defn block
-  "Compute 2 n-block chars, [0..n] and [n..n+1]"
-  [start-idx block-size data]
-  (let [r (->> data
-               (drop start-idx)
-               (take (* 2 block-size))
-               (partition block-size))]
-    (if (-> r count odd?)
-      (-> r butlast vec)                 ;; we drop the last block which is not a couple
-      r)))                               ;; else we return just the computed data
-
-(m/fact
-  (block 0 3 (ascii/to-bytes "hello, dude")) => [[104 101 108] [108 111 44]]
-  (block 0 3 "hello world!")                 => [[\h \e \l] [\l \o \space]]
-  (block 0 6 "hello world!")                 => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]]
-  (block 2 2 "hello world!")                 => [[\l \l] [\o \space]]
-  (block 0 2 "he")                           => []
-  (block 0 6 "hello world! <6b")             => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]])
-
-(defn make-blocks
-  "Make nb-blocks of size n with the string s. If nb-blocks is too large, return by convention 4 blocks."
-  ([n s]
-     (make-blocks (int (/ (count s) n)) n s))
-   ([nb-blocks n s]
-      (let [l (- nb-blocks (mod nb-blocks 2))]
-        (for [i (range 0 l)] (block (* n i) n s)))))
-
-(m/fact
-  (make-blocks 4 2 "hello worl")                                       => [[[\h \e] [\l \l]]
-                                                                           [[\l \l] [\o \space]]
-                                                                           [[\o \space] [\w \o]]
-                                                                           [[\w \o] [\r \l]]]
-  (make-blocks 5 "little by little, we close the line")                => [[[\l \i \t \t \l] [\e \space \b \y \space]]
-                                                                           [[\e \space \b \y \space] [\l \i \t \t \l]]
-                                                                           [[\l \i \t \t \l] [\e \, \space \w \e]]
-                                                                           [[\e \, \space \w \e] [\space \c \l \o \s]]
-                                                                           [[\space \c \l \o \s] [\e \space \t \h \e]]
-                                                                           [[\e \space \t \h \e] [\space \l \i \n \e]]])
-
 (defn norm-hamming
-  "Normalize the hamming distance between 4 n-blocks from the sequence byte-input."
+   "Normalize the hamming distance between 4 n-blocks from the sequence byte-input."
   [n byte-input]
   (let [blks (make-blocks 4 n byte-input)                        ;;  c. For each KEYSIZE (n), take the FIRST n block worth of bytes [0..n], and the SECOND n blocks worth of bytes [n+1..2*n]
                                                                ;; (Or take 4 KEYSIZE blocks instead of 2 and average the distances.)
@@ -102,26 +64,22 @@ e. For each block, the single-byte XOR key that produces the best looking histog
         mean-distance (/ c l)]
     (-> mean-distance
         (/ n)
-        float)))                                      ;; Normalize this result by dividing by KEYSIZE.
+        float))) ;; Normalize this result by dividing by KEYSIZE.
 
 (m/fact
-  (norm-hamming 2 (ascii/to-bytes "hello world, this must be long enough!")) => 19/8
-  (norm-hamming 3 (ascii/to-bytes "hello world, this must be long enough!")) => 31/12)
+  (norm-hamming 2 (mapcat ascii/to-bits "hello world, this must be long enough!")) => 1
+  (norm-hamming 3 (mapcat ascii/to-bits "hello world, this must be long enough!")) => 1/3)
 
 (defn keysize
   "Given the input, return the potential keysize."
-  [byte-input range-test]
+  [input range-test]
   (->> range-test                                         ;; a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
        (reduce
-        (fn [m n] (assoc m n (norm-hamming n byte-input))) ;; c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth
+        (fn [m n] (assoc m n (norm-hamming n input)))      ;; c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth
                                                           ;; of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
         {})
        (apply min-key second)                             ;; d. The KEYSIZE with the smallest normalized
        first))                                            ;;  hamming/edit distance is probably the key.
-
-(comment
-  (keysize byte-input (range 2 41))
-  )
 
 (defn all-blocks
   "Given a byte input and a key size, return the list of byte blocks with such size"
@@ -134,24 +92,22 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 
   ;; I don't succeed in breaking, so i test with things i know!
 
-  (def encrypted-msg (-> {:key "secret"
+  (def encrypted-msg (-> {:key "more secret"
                           :msg "this is a test with sufficient length to have something to break but this may not be that sufficient"}
                          xor/encrypt-bytes))
 
   ;; check that i can decrypt - OK
-  (byte/to-ascii (xor/xor encrypted-msg (ascii/to-bytes "secret")))
-
-  ;; now trying to break it
-  (count "secret")
-  (count (ascii/to-bytes "secret"))
+  (byte/to-ascii (xor/xor encrypted-msg (ascii/to-bytes "more secret")))
 
   ;; first determine the keysize...
   (keysize encrypted-msg (range 2 20))
 
-  (let [byte-input encrypted-msg]
+  (keysize (mapcat ascii/to-bits encrypted-msg) (range 2 41))
+
+  (let [input (mapcat ascii/to-bits encrypted-msg)]
     (->> (range 2 20)
          (reduce
-          (fn [m n] (update-in m [(norm-hamming n byte-input)] conj n))
+          (fn [m n] (update-in m [(norm-hamming n input)] conj n))
           (sorted-map))
          ))
 
@@ -163,41 +119,6 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   [byte-input range-test]
   (let [key-size (keysize byte-input range-test)]
     (all-blocks byte-input key-size)))
-
-(defn shift
-  "n-shift the sequence of data"
-  [n data]
-  (if (= 0 n)
-    data
-    (let [l     (count data)
-          [h t] (split-at (mod n l) data)]
-      (concat t h))))
-
-(m/fact
-  (shift 0  [:a :b])             => [:a :b]
-  (shift 3  [:a :b :c :d :e :f]) => [:d :e :f :a :b :c]
-  (shift 1  [:a :b :c :d :e :f]) => [:b :c :d :e :f :a]
-  (shift -1 [:a :b :c])          => [:c :a :b])
-
-(defn inject-block
-  "Given an input of data, inject a block of data at the nth position"
-  [n block data]
-  (let [l (-> block count inc)]
-    (->> data
-         (map (fn [seq]
-                (->> seq
-                     (split-at (mod n l))
-                     (#(let [[h t] %]
-                         (concat h (conj t block))))
-                     flatten))))))
-
-(m/fact
-  (inject-block 0 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
-  (inject-block 1 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 1 :a :a] [2 1 :a :b] [3 1 :a :c]]
-  (inject-block 2 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [2 :b 1 :a] [3 :c 1 :a]]
-  (inject-block 3 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
-  (inject-block 1 [2 :b] [[1 :a] [2 :b] [3 :c]]) => [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]]
-  (inject-block 2 [3 :c] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]])
 
 ;; f. Now transpose the blocks: make a block that is the first byte of every block, and a block
 ;; that is the second byte of every block, and so on.
@@ -212,7 +133,7 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   [blocks]
   (for [b blocks
         i (range 0 (count blocks))]
-    (inject-block i b blocks)))
+    (block/transpose i b blocks)))
 
 (m/fact
   (compute-possible-transpositions [[1 :a] [2 :b] [3 :c]])
