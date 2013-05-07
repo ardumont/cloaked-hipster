@@ -45,24 +45,43 @@
   (xor (hex/to-bytes "1c0111001f010100061a024b53535009181c") (hex/to-bytes "686974207468652062756c6c277320657965")) => (hex/to-bytes "746865206b696420646f6e277420706c6179")
   (xor (hex/to-bytes "746865206b696420646f6e277420706c6179") (hex/to-bytes "686974207468652062756c6c277320657965")) => (hex/to-bytes "1c0111001f010100061a024b53535009181c"))
 
-(defn encrypt
-  "Given a map {:key 'ascii key' :msg 'ascii message'}, encode the key message into hexadecimal then encrypt the hex msg with the hex key."
+(defn encrypt-bytes
+  "Given a map {:key 'ascii key' :msg 'ascii message'}, encrypt the msg with the hex key and return a byte sequence."
   [{:keys [key msg]}]
   (->> [msg key]
        (map ascii/to-bytes)
-       (apply xor)
-       hex/encode))
+       (apply xor)))
+
+(m/fact
+  (encrypt-bytes {:key "X"
+                  :msg "Cooking MC's like a pound of bacon"}) => [27 55 55 51 49 54 63 120 21 27 127 43 120 52 49 51 61 120 57 120 40 55 45 54 60 120 55 62 120 58 57 59 55 54] )
+
+(defn encrypt
+  "Given a map {:key 'ascii key' :msg 'ascii message'}, encode the key message into hexadecimal then encrypt the hex msg with the hex key."
+  [m]
+  (hex/encode (encrypt-bytes m)))
 
 (m/fact
   (encrypt {:key "X"
             :msg "Cooking MC's like a pound of bacon"}) => "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
-(defn decrypt
-  "Given a map {:key 'ascii key' :msg 'hex encoded message'}, decode the encrypted message."
+(defn decrypt-bytes
+  "Given a map {:key 'ascii key' :msg 'hex encoded message'}, decode the encrypted message and return a byte sequence."
   [{:keys [msg key]}]
-  (->> [(hex/to-bytes msg) (ascii/to-bytes key)]
-       (apply xor)
-       byte/to-ascii))
+  (xor (hex/to-bytes msg) (ascii/to-bytes key)))
+
+(m/fact
+  (decrypt-bytes {:key "X"
+                  :msg (encrypt {:key "X"
+                                 :msg "Cooking MC's like a pound of bacon"})})
+  => [67 111 111 107 105 110 103 32 77 67 39 115 32 108 105 107 101 32 97 32 112 111 117 110 100 32 111 102 32 98 97 99 111 110])
+
+(defn decrypt
+  "Given a map {:key 'ascii key' :msg 'hex encoded message'}, decode the encrypted message into ascii."
+  [m]
+  (-> m
+      decrypt-bytes
+      byte/to-ascii))
 
 (m/fact
   (decrypt {:key "X"
