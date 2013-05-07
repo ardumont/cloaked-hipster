@@ -110,13 +110,15 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   [n data]
   (if (= 0 n)
     data
-    (let [[h t] (split-at n data)]
+    (let [l     (count data)
+          [h t] (split-at (mod n l) data)]
       (concat t h))))
 
 (m/fact
-  (shift 0 [:a :b])             => [:a :b]
-  (shift 3 [:a :b :c :d :e :f]) => [:d :e :f :a :b :c]
-  (shift 1 [:a :b :c :d :e :f]) => [:b :c :d :e :f :a])
+  (shift 0  [:a :b])             => [:a :b]
+  (shift 3  [:a :b :c :d :e :f]) => [:d :e :f :a :b :c]
+  (shift 1  [:a :b :c :d :e :f]) => [:b :c :d :e :f :a]
+  (shift -1 [:a :b :c])          => [:c :a :b])
 
 (defn inject-block
   "Given an input of data, inject a block of data at the nth position"
