@@ -30,7 +30,7 @@
   [by0 by1]
   {:pre [(= (count by0) (count by1))]}
   (->> [by0 by1]
-       (map byte/to-bits)
+       (map byte/to-bits)    ;; transform into 2 8-bits sequence
        (apply hamming-bit))) ;; compare bit to bit
 
 (m/fact
@@ -43,7 +43,7 @@
   [s0 s1]
   {:pre [(= (count s0) (count s1))]}        ;; this version does not support string with different sizes
   (->> [s0 s1]
-       (map (partial mapcat ascii/to-bits)) ;; transform into 2 sequences of bits
+       (map (partial mapcat ascii/to-bits)) ;; transform into 2 8-bits sequences
        (apply hamming-bit)))                ;; compare bit to bit
 
 (m/fact

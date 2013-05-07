@@ -78,32 +78,32 @@ e. For each block, the single-byte XOR key that produces the best looking histog
                                                                           [[\l \i \t \t \l] [\e \, \space \w \e]]
                                                                           [[\e \, \space \w \e] [\space \c \l \o \s]]])
 
-(defn normalize
-  "Normalize the hamming distance between 4 n-blocks from the sequence s."
+(defn norm-hamming
+  "Normalize the hamming distance between 4 n-blocks from the sequence byte-input."
   [n byte-input]
-  (let [blks (make-4blocks n byte-input)                       ;;  c. For each KEYSIZE (n), take the FIRST n [0..n] worth of bytes, and the SECOND n [n+1..2*n] worth of bytes,
+  (let [blks (make-4blocks n byte-input)                       ;;  c. For each KEYSIZE (n), take the FIRST n block worth of bytes [0..n], and the SECOND n blocks worth of bytes [n+1..2*n]
                                                                ;; (Or take 4 KEYSIZE blocks instead of 2 and average the distances.)
         l    (count blks)
         c    (->> blks
-                  (map (fn [[bs be]] (distance/hamming bs be))) ;; and find the edit distance between them.
+                  (map (fn [[bs be]] (distance/hamming bs be))) ;; and find the hamming/edit distance between them.
                   (apply +))
         mean-distance (/ c l)]
     (/ mean-distance n)))                                      ;; Normalize this result by dividing by KEYSIZE.
 
 (m/fact
-  (normalize 2 (ascii/to-bytes "hello world, this must be long enough!")) => 19/8
-  (normalize 3 (ascii/to-bytes "hello world, this must be long enough!")) => 31/12)
+  (norm-hamming 2 (ascii/to-bytes "hello world, this must be long enough!")) => 19/8
+  (norm-hamming 3 (ascii/to-bytes "hello world, this must be long enough!")) => 31/12)
 
 (defn keysize
   "Given the input, return the potential keysize."
   [byte-input range-test]
-  (->> range-test                                      ;; a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
+  (->> range-test                                         ;; a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
        (reduce
-        (fn [m n] (assoc m n (normalize n byte-input))) ;; c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth
-                                                       ;; of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
+        (fn [m n] (assoc m n (norm-hamming n byte-input))) ;; c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth
+                                                          ;; of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
         {})
-       (apply min-key second)                          ;; d. The KEYSIZE with the smallest normalized
-       first))                                         ;;  hamming/edit distance is probably the key.
+       (apply min-key second)                             ;; d. The KEYSIZE with the smallest normalized
+       first))                                            ;;  hamming/edit distance is probably the key.
 
 (comment
   (keysize byte-input (range 2 41)))
@@ -136,9 +136,8 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 
   (->> (range 2 12)
        (reduce
-        (fn [m n] (assoc m n (normalize n encrypted-msg)))
+        (fn [m n] (assoc m n (norm-hamming n encrypted-msg)))
         {})
-
        )
 
   ;; boum - 2 this is false, the keysize is 6
