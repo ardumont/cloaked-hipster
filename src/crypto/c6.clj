@@ -53,42 +53,56 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 
 (defn block
   "Compute 2 n-block chars, [0..n] and [n..n+1]"
-  [s n v]
-  (let [vect (vec v)]
-    [(subvec vect s (+ s n)) (subvec vect (+ s n) (+ s (* 2 n)))]))
+  [start-idx block-size data]
+  (let [r (->> data
+               (drop start-idx)
+               (take (* 2 block-size))
+               (partition block-size))]
+    (if (-> r count odd?)
+      (-> r butlast vec)                 ;; we drop the last block which is not a couple
+      r)))                               ;; else we return just the computed data
 
 (m/fact
   (block 0 3 (ascii/to-bytes "hello, dude")) => [[104 101 108] [108 111 44]]
   (block 0 3 "hello world!")                 => [[\h \e \l] [\l \o \space]]
   (block 0 6 "hello world!")                 => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]]
-  (block 2 2 "hello world!")                 => [[\l \l] [\o \space]])
+  (block 2 2 "hello world!")                 => [[\l \l] [\o \space]]
+  (block 0 2 "he")                           => []
+  (block 0 6 "hello world! <6b")             => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]])
 
-(defn make-4blocks
+(defn make-blocks
   "Make nb-blocks of size n with the string s. If nb-blocks is too large, return by convention 4 blocks."
-  [n s]
-  (for [i (range 0 4)] (block (* n i) n s)))
+  ([n s]
+     (make-blocks (int (/ (count s) n)) n s))
+   ([nb-blocks n s]
+      (let [l (- nb-blocks (mod nb-blocks 2))]
+        (for [i (range 0 l)] (block (* n i) n s)))))
 
 (m/fact
-  (make-4blocks 2 "hello world, will be broke into multiple blocks.") => [[[\h \e] [\l \l]]
-                                                                          [[\l \l] [\o \space]]
-                                                                          [[\o \space] [\w \o]]
-                                                                          [[\w \o] [\r \l]]]
-  (make-4blocks 5 "little by little, we close the line ")             => [[[\l \i \t \t \l] [\e \space \b \y \space]]
-                                                                          [[\e \space \b \y \space] [\l \i \t \t \l]]
-                                                                          [[\l \i \t \t \l] [\e \, \space \w \e]]
-                                                                          [[\e \, \space \w \e] [\space \c \l \o \s]]])
+  (make-blocks 4 2 "hello worl")                                       => [[[\h \e] [\l \l]]
+                                                                           [[\l \l] [\o \space]]
+                                                                           [[\o \space] [\w \o]]
+                                                                           [[\w \o] [\r \l]]]
+  (make-blocks 5 "little by little, we close the line")                => [[[\l \i \t \t \l] [\e \space \b \y \space]]
+                                                                           [[\e \space \b \y \space] [\l \i \t \t \l]]
+                                                                           [[\l \i \t \t \l] [\e \, \space \w \e]]
+                                                                           [[\e \, \space \w \e] [\space \c \l \o \s]]
+                                                                           [[\space \c \l \o \s] [\e \space \t \h \e]]
+                                                                           [[\e \space \t \h \e] [\space \l \i \n \e]]])
 
 (defn norm-hamming
   "Normalize the hamming distance between 4 n-blocks from the sequence byte-input."
   [n byte-input]
-  (let [blks (make-4blocks n byte-input)                       ;;  c. For each KEYSIZE (n), take the FIRST n block worth of bytes [0..n], and the SECOND n blocks worth of bytes [n+1..2*n]
+  (let [blks (make-blocks 4 n byte-input)                        ;;  c. For each KEYSIZE (n), take the FIRST n block worth of bytes [0..n], and the SECOND n blocks worth of bytes [n+1..2*n]
                                                                ;; (Or take 4 KEYSIZE blocks instead of 2 and average the distances.)
         l    (count blks)
         c    (->> blks
                   (map (fn [[bs be]] (distance/hamming bs be))) ;; and find the hamming/edit distance between them.
                   (apply +))
         mean-distance (/ c l)]
-    (/ mean-distance n)))                                      ;; Normalize this result by dividing by KEYSIZE.
+    (-> mean-distance
+        (/ n)
+        float)))                                      ;; Normalize this result by dividing by KEYSIZE.
 
 (m/fact
   (norm-hamming 2 (ascii/to-bytes "hello world, this must be long enough!")) => 19/8
@@ -106,7 +120,8 @@ e. For each block, the single-byte XOR key that produces the best looking histog
        first))                                            ;;  hamming/edit distance is probably the key.
 
 (comment
-  (keysize byte-input (range 2 41)))
+  (keysize byte-input (range 2 41))
+  )
 
 (defn all-blocks
   "Given a byte input and a key size, return the list of byte blocks with such size"
@@ -120,29 +135,28 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   ;; I don't succeed in breaking, so i test with things i know!
 
   (def encrypted-msg (-> {:key "secret"
-                          :msg "this is a test with sufficient length to have data to break"}
-                         xor/encrypt
-                         hex/to-bytes))
-
-  (count encrypted-msg)
+                          :msg "this is a test with sufficient length to have something to break but this may not be that sufficient"}
+                         xor/encrypt-bytes))
 
   ;; check that i can decrypt - OK
   (byte/to-ascii (xor/xor encrypted-msg (ascii/to-bytes "secret")))
 
   ;; now trying to break it
+  (count "secret")
+  (count (ascii/to-bytes "secret"))
 
   ;; first determine the keysize...
-  (keysize encrypted-msg (range 2 12))
+  (keysize encrypted-msg (range 2 20))
 
-  (->> (range 2 12)
-       (reduce
-        (fn [m n] (assoc m n (norm-hamming n encrypted-msg)))
-        {})
-       )
+  (let [byte-input encrypted-msg]
+    (->> (range 2 20)
+         (reduce
+          (fn [m n] (update-in m [(norm-hamming n byte-input)] conj n))
+          (sorted-map))
+         ))
 
-  ;; boum - 2 this is false, the keysize is 6
-
-  )
+  ;; boum - 4 this is false, the keysize is 6, now I've got a problem
+    )
 
 (defn potential-keys
   "Given the byte-input, compute the potential key size and return the list of those possible keys with such sizes."
