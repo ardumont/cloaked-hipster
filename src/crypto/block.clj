@@ -22,7 +22,7 @@
   (split 0 6 "hello world! <6b")             => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]])
 
 (defn make-blocks
-  "Make nb-blocks of size n with the string s. If nb-blocks is too large, return by convention 4 blocks."
+  "Make nb-blocks of size n with the string s. If nb-blocks is not specified, return as much n-blocks as possible."
   ([n s]
      (make-blocks (-> s count (/ n) int) n s))
    ([nb-blocks n s]
@@ -30,7 +30,6 @@
         (for [i (range 0 l)] (split (* n i) n s)))))
 
 (m/fact
-  (make-blocks 2 2 "hello worl")
   (make-blocks 4 2 "hello worl")                                       => [[[\h \e] [\l \l]]
                                                                            [[\l \l] [\o \space]]
                                                                            [[\o \space] [\w \o]]
@@ -43,7 +42,7 @@
                                                                            [[\e \space \t \h \e] [\space \l \i \n \e]]])
 
 (defn shift
-  "n-shift the sequence of data"
+  "n-shift the sequence of data - positive value shift to the right and negative value shift to the left. The shift is circular."
   [n data]
   (if (= 0 n)
     data
@@ -56,6 +55,21 @@
   (shift 3  [:a :b :c :d :e :f]) => [:d :e :f :a :b :c]
   (shift 1  [:a :b :c :d :e :f]) => [:b :c :d :e :f :a]
   (shift -1 [:a :b :c])          => [:c :a :b])
+
+(defn shift-and-lose
+  "n-shift the sequence of data. Positive value shifts to the right, negative to the right. The shift is not circular, so data are pushed outside and are lost."
+  [n data]
+  (cond (= 0 n)  data
+        (pos? n) (drop n data)
+        :else    (->> data
+                      (shift n)
+                      (take (* -1 n)))))
+
+(m/fact
+  (shift-and-lose 0 [:a :b])             => [:a :b]
+  (shift-and-lose 3 [:a :b :c :d :e :f]) => [:d :e :f]
+  (shift-and-lose 1 [:a :b :c :d :e :f]) => [:b :c :d :e :f]
+  (shift-and-lose -3 [:a :b :d :e :f])   => [:d :e :f])
 
 (defn transpose
   "Given an input of data, inject a block of data at the nth position"
