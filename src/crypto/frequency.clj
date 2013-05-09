@@ -25,11 +25,8 @@
        (map frequency))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
-(def byte-freq  ^{:doc "frequency of english, key are encoded into hexadecimal"}
-  (reduce
-   (fn [m [k v]] (assoc m (int k) v))
-   {}
-   frequency))
+(def byte-freq ^{:doc "frequency of english, key are encoded in bytes."}
+  (reduce (fn [m [k v]] (assoc m (int k) v)) {} frequency))
 
 (m/fact
   (->> (crypto.util/range \a \z)
@@ -47,11 +44,14 @@
          frequencies
          (reduce
           (fn [m [k v]]
-            (assoc m k (/ v l)))
+            (assoc m k (float (/ v l))))
           {}))))
 
 (m/fact
-  (compute-freq (crypto.ascii/to-bytes "hello")) => (m/just {111 1/5, 108 2/5, 101 1/5, 104 1/5}))
+  (compute-freq (crypto.ascii/to-bytes "hello")) => (m/just {111 (float 0.2)
+                                                             108 (float 0.4)
+                                                             101 (float 0.2)
+                                                             104 (float 0.2)}))
 
 (defn- diff-freq
   "Compute the difference between two frequency maps into a difference frequency map."
@@ -63,13 +63,12 @@
         {})))
 
 (m/fact
-  (diff-freq {:a 1 :b 10} {:c 10 :b 10 :a 2})
-  => {:a 1 :b 0 :c 10})
+  (diff-freq {:a 1 :b 10} {:c 10 :b 10 :a 2}) => {:a 1 :b 0 :c 10})
 
 (defn- sum-diff-map
   "Compute the sum of a map."
   [d-freq]
-  (reduce (fn [s [k v]] (+ s v)) 0 d-freq))
+  (reduce (fn [s [_ v]] (+ s v)) 0 d-freq))
 
 (m/fact
   (sum-diff-map {:a 1 :b 2 :c 3}) => 6)
@@ -83,7 +82,7 @@
        sum-diff-map))
 
 (m/fact
-  (compute-diff (crypto.ascii/to-bytes "hello")) => 199.07999998509888)
+  (compute-diff (crypto.ascii/to-bytes "hello")) => 211.0099999850989)
 
 (defn frequency-equals
   "Compute the frequency of same characters between 2 sequence."
