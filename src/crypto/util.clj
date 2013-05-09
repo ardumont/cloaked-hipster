@@ -2,19 +2,19 @@
   "A utility namespace"
   (:require [midje.sweet :as m]))
 
-(defn range
+(defn rng
   [cs ce]
   (->> [(int cs) (inc (int ce))]
-       (apply clojure.core/range)))
+       (apply range)))
 
 (m/fact
-  (range \a \c) => [97 98 99])
+  (rng \a \c) => [97 98 99])
 
-(defn range-char
+(defn rng-char
   "range for characters. Beware, contrary to the clojure.core/range function, this one is inclusive."
   [cs ce]
-  (->> (range cs ce)
+  (->> (rng cs ce)
        (map char)))
 
 (m/fact
-  (range-char \a \c) => [\a \b \c])
+  (rng-char \a \c) => [\a \b \c])

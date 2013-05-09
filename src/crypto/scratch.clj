@@ -4,6 +4,6 @@
             [crypto.file      :as file]))
 
 (->> "./resources/base64-encoded"
-     file/load-simple
+     file/ld-simple
      c1/decode
      (spit "resources/base64-decoded-into-hex-encoded"))

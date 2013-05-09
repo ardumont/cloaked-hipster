@@ -3,14 +3,14 @@
   (:require [midje.sweet    :as m]
             [clojure.string :as s]))
 
-(defn load-simple
+(defn ld-simple
   "Given a file, load its content and glue all lines together."
   [filepath]
   (-> filepath
       slurp
       (s/replace "\n" "")))
 
-(defn load
+(defn ld
   "Given a file, load the content of the file and return each line into a vector of lines."
   [filepath]
   (-> filepath

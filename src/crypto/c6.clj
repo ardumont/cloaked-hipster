@@ -45,7 +45,7 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 
 (m/fact
   (-> "./resources/base64-encoded"
-      file/load-simple
+      file/ld-simple
       c1/decode
       hex/to-bytes
       break-repeating-key-xor)
