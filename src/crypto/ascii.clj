@@ -13,9 +13,10 @@
   (to-bytes "abcdef") => [97 98 99 100 101 102]
   (to-bytes "123")    => [49 50 51])
 
-(def to-bits ^{:private true
-                 :doc "Convert a char into a 8-bits sequence"}
-  (comp binary/to-8bits int))
+(defmulti to-bits "Convert a char into a 8-bits sequence"
+  string?)
+
+(defmethod to-bits false [c] ((comp binary/to-8bits int) c))
 
 (m/fact
   (to-bits \a) => [0 1 1 0 0 0 0 1]
@@ -25,7 +26,21 @@
   (to-bits \s) => [0 1 1 1 0 0 1 1]
   (to-bits \e) => [0 1 1 0 0 1 0 1]
   (to-bits \n) => [0 1 1 0 1 1 1 0]
-  (to-bits \d) => [0 1 1 0 0 1 0 0]
+  (to-bits \d) => [0 1 1 0 0 1 0 0])
 
-  (mapcat to-bits "roses") => [0 1 1 1 0 0 1 0, 0 1 1 0 1 1 1 1, 0 1 1 1 0 0 1 1, 0 1 1 0 0 1 0 1, 0 1 1 1 0 0 1 1]
-  (mapcat to-bits "toned") => [0 1 1 1 0 1 0 0, 0 1 1 0 1 1 1 1, 0 1 1 0 1 1 1 0, 0 1 1 0 0 1 0 1, 0 1 1 0 0 1 0 0])
+(defmethod to-bits true [s]
+  (->> s
+       (mapcat to-bits)
+       (partition 8)))
+
+(m/fact
+  (to-bits "roses") => [[0 1 1 1 0 0 1 0]
+                        [0 1 1 0 1 1 1 1]
+                        [0 1 1 1 0 0 1 1]
+                        [0 1 1 0 0 1 0 1]
+                        [0 1 1 1 0 0 1 1]]
+  (to-bits "toned") => [[0 1 1 1 0 1 0 0]
+                        [0 1 1 0 1 1 1 1]
+                        [0 1 1 0 1 1 1 0]
+                        [0 1 1 0 0 1 0 1]
+                        [0 1 1 0 0 1 0 0]])

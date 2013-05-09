@@ -1,11 +1,11 @@
 (ns crypto.base64
   "encode and decode a string in base64"
-  (:use [midje.sweet :only [fact]])
   (:require [midje.sweet    :as m]
-            [crypto.dico    :as d]
-            [crypto.binary  :as binary]
-            [crypto.byte    :as byte]
-            [crypto.ascii   :as ascii]
+            [crypto
+             [dico          :as d]
+             [binary        :as binary]
+             [byte          :as byte]
+             [ascii         :as ascii]]
             [clojure.string :as s]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; encoding
@@ -139,20 +139,60 @@
                        0 1 1 0 1 0,
                        0 1 1 0 1 1])
 
-(defn decode
+(defn to-bits
   "Decode base64 message"
   [s]
   (->> s
-       (partition 4)         ;; 4 words (32 bits)
-       (mapcat decode4)      ;; decoded into 3 bytes (24 bits)
-       (partition 8)         ;; spliced into byte word (8 bits)
-       (map binary/to-char)  ;; converted back into char
-       (s/join "")))         ;; then joined to form a string
+       (partition 4)
+       (mapcat decode4)
+       (partition 8)))
 
 (m/fact
-  (decode "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  (to-bits "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  =>  (ascii/to-bits "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
+
+  (to-bits "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/to-bits "any carnal pleas")
+  (to-bits "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/to-bits "any carnal pleasu")
+  (to-bits "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/to-bits "any carnal pleasur"))
+
+(defn to-ascii
+  "Decode base64 message"
+  [s]
+  (->> s
+       to-bits
+       (map binary/to-char)  ;; converted back into char
+       (s/join "")))
+
+(m/fact
+  (to-ascii "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
   =>  "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure."
 
-  (decode "YW55IGNhcm5hbCBwbGVhcw==") => "any carnal pleas"
-  (decode "YW55IGNhcm5hbCBwbGVhc3U=") => "any carnal pleasu"
-  (decode "YW55IGNhcm5hbCBwbGVhc3Vy") => "any carnal pleasur")
+  (to-ascii "YW55IGNhcm5hbCBwbGVhcw==") => "any carnal pleas"
+  (to-ascii "YW55IGNhcm5hbCBwbGVhc3U=") => "any carnal pleasu"
+  (to-ascii "YW55IGNhcm5hbCBwbGVhc3Vy") => "any carnal pleasur")
+
+(defn to-bytes
+  "Decode base64 message"
+  [s]
+  (->> s
+       to-bits
+       (map binary/to-bytes)))
+
+(m/fact
+  (to-bytes "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  => (ascii/to-bytes "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
+
+  (to-bytes "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/to-bytes "any carnal pleas")
+  (to-bytes "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/to-bytes "any carnal pleasu")
+  (to-bytes "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/to-bytes "any carnal pleasur"))
+
+(defn to-hex
+  "Decode a base64 encoded string into an hexadecimal string"
+  [s]
+  (-> s
+      to-bytes
+      byte/to-hex))
+
+(m/fact
+  (to-hex "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
+  => "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")

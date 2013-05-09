@@ -16,7 +16,7 @@ Encrypt a bunch of stuff using your repeating-key XOR function. Get a feel for i
   [m]
   (-> m
       xor/encrypt
-      hex/encode))
+      byte/to-hex))
 
 (defn decrypt "Decrypt the hexadecimal message using the ascii key and return the ascii message"
   [{:keys [key msg]}]
