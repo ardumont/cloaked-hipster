@@ -39,35 +39,6 @@
          (map (comp byte-freq int)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
-(def hex-frequency ^{:doc "frequency of english, key are encoded into hexadecimal"}
-  (reduce
-   (fn [m [k v]] (assoc m (char/to-hex k) v))
-   {}
-   frequency))
-
-(m/fact
-  (->> (crypto.util/range \a \z)
-       (map (comp hex-frequency byte/to-hex)))
-  => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07]
-  (->> (crypto.util/range \A \Z)
-       (map (comp hex-frequency byte/to-hex)))
-  => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
-
-(defn- compute-hex-freq
-  "Compute the frequency of hexadecimal characters inside a string."
-  [s]
-  (let [l (/ (count s) 2)]
-    (->> s
-         (partition 2)
-         frequencies
-         (reduce
-          (fn [m [k v]]
-            (assoc m (clojure.string/join "" k) (/ v l)))
-          {}))))
-
-(m/fact
-  (compute-hex-freq (crypto.hex/encode "hello")) => (m/just {"6f" 1/5, "6c" 2/5, "65" 1/5, "68" 1/5}))
-
 (defn- compute-freq
   "Compute the frequency of byte inside a byte string."
   [s]
