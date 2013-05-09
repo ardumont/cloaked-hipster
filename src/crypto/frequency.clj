@@ -117,7 +117,7 @@
 (m/fact
   (compute-diff (crypto.ascii/to-bytes "hello")) => 199.07999998509888)
 
-(defn- frequency-equals
+(defn frequency-equals
   "Compute the frequency of same characters between 2 sequence."
   [b0 b1]
   (let [l (max (count b0) (count b1))
@@ -130,36 +130,3 @@
   (frequency-equals "123 hello" "123 hello") => 1
   (frequency-equals "123 hello" "123")       => 1/3
   (frequency-equals "123"       "123 hello") => 1/3)
-
-(def ^{:doc "threshold from which we have a multiple of the key length"}
-  threshold 3/50)
-
-(defn keysize
-    "Given an encrypted message and a range test, compute the potential key size."
-    [encrypted-msg range-test]
-    (->> (for [n range-test]
-           (let [frequency (->> encrypted-msg
-                                (block/shift n)
-                                (frequency-equals encrypted-msg))]
-             (if (< threshold frequency) n :k)))
-         (filter number?)
-         math/lgcd))
-
-(m/fact
-  (let [msg-to-encrypt "Let's continue our assumption that this text file is written in English. Therefore, we know which words are the most common in this language. We also know that each byte represents a character that stands for a letter or punctuation mark in the text. So it has a meaning. Because in every text different parts and words appear multiple times, we can use an algorithm that applies XOR until we get a meaningful text-file. This stands for a text file that does not contain gibberish."]
-    (-> {:key "this is no longer a secret"
-         :msg msg-to-encrypt}
-        crypto.xor/encrypt-bytes
-        (keysize (range 2 50))) => (count "this is no longer a secret")
-    (-> {:key "secret"
-         :msg msg-to-encrypt}
-        crypto.xor/encrypt-bytes
-        (keysize (range 2 50))) => (count "secret")
-    (-> {:key "the key or the message must be long enough"
-         :msg msg-to-encrypt}
-        crypto.xor/encrypt-bytes
-        (keysize (range 2 44))) => (count "the key or the message must be long enough")
-    (-> {:key "yet another secret and some more secret"
-         :msg msg-to-encrypt}
-        crypto.xor/encrypt-bytes
-        (keysize (range 2 40))) => (count "yet another secret and some more secret")))
