@@ -58,12 +58,12 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 (defn keysize
   "Given an encrypted message and a range test, compute the potential key size."
   [encrypted-msg range-test]
-  (->> (for [n range-test]
-         (let [frequence (->> encrypted-msg
-                              (block/shift n)
-                              (frequency/frequency-equals encrypted-msg))]
-           (if (< threshold frequence) n :k)))
-       (filter number?)
+  (->> (for [n range-test
+             :let [freq (->> encrypted-msg
+                             (block/shift n)
+                             (frequency/frequency-equals encrypted-msg))]
+             :when (< threshold freq)]
+         n)
        math/lgcd))
 
 (m/fact
