@@ -30,8 +30,6 @@ e. For each block, the single-byte XOR key that produces the best looking histog
  repeating-key XOR key byte for that block. Put them together and you have the key."
   (:require [midje.sweet      :as m]
             [crypto.c1        :as c1]
-            [crypto.c2        :as c2]
-            [crypto.xor       :as xor]
             [crypto.distance  :as distance]
             [crypto.file      :as file]
             [crypto.byte      :as byte]
@@ -40,6 +38,8 @@ e. For each block, the single-byte XOR key that produces the best looking histog
             [crypto.block     :as block]
             [crypto.frequency :as frequency]
             [crypto.char      :as char]
+            [crypto.math      :as math]
+            [crypto.xor       :as xor]
             [clojure.string   :as s]
             [incanter
              [core            :as icore]
@@ -55,64 +55,66 @@ e. For each block, the single-byte XOR key that produces the best looking histog
 (defn norm-hamming
    "Normalize the hamming distance between 4 n-blocks from the sequence byte-input."
   [n byte-input]
-  (let [blks (make-blocks 4 n byte-input)                        ;;  c. For each KEYSIZE (n), take the FIRST n block worth of bytes [0..n], and the SECOND n blocks worth of bytes [n+1..2*n]
-                                                               ;; (Or take 4 KEYSIZE blocks instead of 2 and average the distances.)
-        l    (count blks)
-        c    (->> blks
-                  (map (fn [[bs be]] (distance/hamming bs be))) ;; and find the hamming/edit distance between them.
-                  (apply +))
-        mean-distance (/ c l)]
-    (-> mean-distance
-        (/ n)
-        float))) ;; Normalize this result by dividing by KEYSIZE.
+  (let [l    4
+        blks (block/make-blocks l n byte-input) ;; For each KEYSIZE n, take the FIRST n [0..n] worth of bytes, and the SECOND KEYSIZE [n+1..2*n] worth of bytes
+                                                ;; (Or take 4 KEYSIZE blocks instead of 2 and average the distances.)
+        l (count blks)
+        c (reduce
+           (fn [s [bs be]] (+ s (distance/hamming bs be)))
+           0
+           blks)] ;; and find the hamming/edit distance between them.
+    (-> c
+        (/ l)
+        (/ n))))                                               ;; Normalize this result by dividing by KEYSIZE.
 
-(m/fact
-  (norm-hamming 2 (mapcat ascii/to-bits "hello world, this must be long enough!")) => 1
-  (norm-hamming 3 (mapcat ascii/to-bits "hello world, this must be long enough!")) => 1/3)
+(m/future-fact
+  (norm-hamming 10 (mapcat ascii/to-bits "hello world, this must be long enough!")) => 13/20
+  (norm-hamming 6 (mapcat ascii/to-bits "hello world, this must be long enough!"))  => 5/8)
+
+;; (defn norm-hamming
+;;    "Normalize the hamming distance between 4 n-blocks from the sequence byte-input."
+;;   [n byte-input]
+;;   (let [[bs be] (block/split 0 n byte-input)]
+;;     (-> (distance/hamming bs be)
+;;         (/ n))))
 
 (defn keysize
   "Given the input, return the potential keysize."
   [input range-test]
   (->> range-test                                         ;; a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40.
        (reduce
-        (fn [m n] (assoc m n (norm-hamming n input)))      ;; c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth
+        (fn [m n] (update-in m [(norm-hamming n input)] conj n))
+                                                          ;; c. For each KEYSIZE, take the FIRST KEYSIZE [0..KEYSIZE] worth of bytes, and the SECOND KEYSIZE [KEYSIZE+1..2*KEYSIZE] worth
                                                           ;; of bytes, and find the edit distance between them. Normalize this result by dividing by KEYSIZE.
-        {})
-       (apply min-key second)                             ;; d. The KEYSIZE with the smallest normalized
-       first))                                            ;;  hamming/edit distance is probably the key.
+        (sorted-map))
+       first
+       second                                             ;; d. The KEYSIZE with the smallest normalized
+       first))                                            ;; hamming/edit distance is probably the key.
+
+(m/future-fact :does-not-work-and-do-not-get-what-s-not-working
+ (let [msg-to-encrypt "Let's continue our assumption that this text file is written in English. Therefore, we know which words are the most common in this language. We also know that each byte represents a character that stands for a letter or punctuation mark in the text. So it has a meaning. Because in every text different parts and words appear multiple times, we can use an algorithm that applies XOR until we get a meaningful text-file. This stands for a text file that does not contain gibberish."]
+   (-> {:key "this is no longer a secret"
+        :msg msg-to-encrypt}
+       xor/encrypt-bytes
+       (keysize (range 2 30))) => (count "this is no longer a secret")
+   (-> {:key "the key or the message must be long enough"
+        :msg msg-to-encrypt}
+       xor/encrypt-bytes
+       (keysize (range 2 44))) => (count "the key or the message must be long enough")
+   (-> {:key "yet another secret and some more secret"
+        :msg msg-to-encrypt}
+       xor/encrypt-bytes
+       (keysize (range 2 40))) => (count "yet another secret and some more secret")
+   (-> {:key "12 other secret but not long enough"
+        :msg msg-to-encrypt}
+       xor/encrypt-bytes
+       (keysize (range 2 40))) => (count "12 other secret but not long enough")))
 
 (defn all-blocks
   "Given a byte input and a key size, return the list of byte blocks with such size"
   [byte-input key-size]
   (->> byte-input
        (partition key-size))) ;; e. Now that you probably know the KEYSIZE: break the ciphertext into blocks of KEYSIZE length.
-
-(comment
-  (all-blocks byte-input 2)
-
-  ;; I don't succeed in breaking, so i test with things i know!
-
-  (def encrypted-msg (-> {:key "more secret"
-                          :msg "this is a test with sufficient length to have something to break but this may not be that sufficient"}
-                         xor/encrypt-bytes))
-
-  ;; check that i can decrypt - OK
-  (byte/to-ascii (xor/xor encrypted-msg (ascii/to-bytes "more secret")))
-
-  ;; first determine the keysize...
-  (keysize encrypted-msg (range 2 20))
-
-  (keysize (mapcat ascii/to-bits encrypted-msg) (range 2 41))
-
-  (let [input (mapcat ascii/to-bits encrypted-msg)]
-    (->> (range 2 20)
-         (reduce
-          (fn [m n] (update-in m [(norm-hamming n input)] conj n))
-          (sorted-map))
-         ))
-
-  ;; boum - 4 this is false, the keysize is 6, now I've got a problem
-    )
 
 (defn potential-keys
   "Given the byte-input, compute the potential key size and return the list of those possible keys with such sizes."
@@ -160,7 +162,6 @@ e. For each block, the single-byte XOR key that produces the best looking histog
   (def block-by-block
     (->> all-transposed-blocks
          (map (partial map xor/decrypt-brute-force))))
-
 )
 
 (defn freq
