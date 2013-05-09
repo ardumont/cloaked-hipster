@@ -16,19 +16,19 @@
        first))
 
 (m/fact
-  (comp-bits-sequence 8  [1 1 1]           (partial concat [0])) => [0 0 0 0 0 1 1 1]
-  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 1 0 0 0]
-  (comp-bits-sequence 4  [1 1 1]           (partial concat [0])) => [0 1 1 1]
-  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] (partial concat [0])) => [0 0 0 0 0 0 1 0 0 0]
-  (comp-bits-sequence 8  [1 1 1]           #(concat % [0]))      => [1 1 1 0 0 0 0 0]
-  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0]
-  (comp-bits-sequence 4  [1 1 1]           #(concat % [0]))      => [1 1 1 0]
-  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] #(concat % [0]))      => [0 0 0 0 1 0 0 0 0 0])
+  (comp-bits-sequence 8  [1 1 1]           (partial cons 0)) => [0 0 0 0 0 1 1 1]
+  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] (partial cons 0)) => [0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 4  [1 1 1]           (partial cons 0)) => [0 1 1 1]
+  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] (partial cons 0)) => [0 0 0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 8  [1 1 1]           #(conj % 0))      => [1 1 1 0 0 0 0 0]
+  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] #(conj % 0))      => [0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 4  [1 1 1]           #(conj % 0))      => [1 1 1 0]
+  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] #(conj % 0))      => [0 0 0 0 1 0 0 0 0 0])
 
 (defn comp-before
   "Complement by the most significant side (head) a bits sequence to n bits (if necessary)."
   [n b]
-  (comp-bits-sequence n b (partial concat [0])))
+  (comp-bits-sequence n b (partial cons 0)))
 
 (m/fact
   (comp-before 8 [1 1 1])            => [0 0 0 0 0 1 1 1]
@@ -53,8 +53,7 @@
   [b]
   (if (= 0 b)
     []
-    (concat (-> b (/ 2) int bin)
-            [(mod b 2)])))
+    (conj (-> b (/ 2) int bin) (mod b 2))))
 
 (m/fact
   (bin 97)  => [1 1 0 0 0 0 1]
@@ -89,10 +88,11 @@
 (defn to-bytes
   "Convert a bits sequence into a number"
   [b]
-  (->> (reverse b)
-       (map-indexed (fn [i v] [(Math/pow 2 i) v]))
-       (reduce (fn [a [e n]] (if (= n 1) (+ e a) a)) 0)
-       int))
+  (first
+   (reduce
+    (fn [[a e] n] [(+ a (* n e)) (/ e 2)])
+    [0 (-> 2 (Math/pow (dec (count b))) int)]
+    b)))
 
 (m/fact
   (to-bytes [1 1 0 0 0 0 1])   => 97
