@@ -5,18 +5,13 @@
             [crypto.binary :as binary]
             [crypto.byte   :as byte]))
 
+(def hamming-map {true 0})
+
 (defn hamming-bit
   "hamming distance on bits sequence"
   [by0 by1]
   (->> [by0 by1]
-       (apply map (fn [b0 b1] (if (= b0 b1) 0 1)))
-       (apply +)))
-
-(let [[by0 by1] [[0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 1 0 1 1 1 0 1 1 0 1 1 1 1 0 1 1 1 0 0 1 0 0 1 1 0 0 1 0 0]
-                 [0 1 1 0 1 0 0 0 0 1 1 0 0 1 0 1 0 1 1 0 1 1 0 0 0 1 1 0 1 1 0 0 0 1 1 0 1 1 1 1 0 0 1 0 0 0 0 0 0 1 1 0 0 1 0 0 0 1 1 1 0 1 0 1 0 1 1 0 0 1 0 0 0 1 1 0 0 1 0 1]]
-      m {true 0}]
-  (->> [by0 by1]
-       (apply map (fn [b0 b1] (m (= b0 b1) 1)))
+       (apply map (fn [b0 b1] (hamming-map (= b0 b1) 1)))
        (apply +)))
 
 (m/fact
