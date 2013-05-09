@@ -62,14 +62,11 @@
          frequencies
          (reduce
           (fn [m [k v]]
-            (assoc m (clojure.string/join "" k) (float (/ v l))))
+            (assoc m (clojure.string/join "" k) (/ v l)))
           {}))))
 
-(m/future-fact :does-not-understand-why-this-does-work-yet
-  (compute-hex-freq (crypto.hex/encode "hello")) => (m/just {"6f" 0.1, "6c" 0.2, "65" 0.1, "68" 0.1}))
-
-(m/fact "`just` provides extended equality"
-  {:a 1, :b 2, :c "some text"} => (m/just {:a 1, :b 2, :c #"text"}))
+(m/fact
+  (compute-hex-freq (crypto.hex/encode "hello")) => (m/just {"6f" 1/5, "6c" 2/5, "65" 1/5, "68" 1/5}))
 
 (defn- compute-freq
   "Compute the frequency of byte inside a byte string."
@@ -79,11 +76,11 @@
          frequencies
          (reduce
           (fn [m [k v]]
-            (assoc m k (float (/ v l))))
+            (assoc m k (/ v l)))
           {}))))
 
-(m/future-fact :does-not-understand-why-this-does-work-yet
-  (compute-freq (crypto.ascii/to-bytes "hello")) => (m/just {111 0.2 108 0.4 101 0.2 104 0.2}))
+(m/fact
+  (compute-freq (crypto.ascii/to-bytes "hello")) => (m/just {111 1/5, 108 2/5, 101 1/5, 104 1/5}))
 
 (defn- diff-freq
   "Compute the difference between two frequency maps into a difference frequency map."
