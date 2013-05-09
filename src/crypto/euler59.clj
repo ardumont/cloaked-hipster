@@ -16,7 +16,7 @@ Your task has been made easy, as the encryption key consists of three lower case
 Using cipher1.txt (right click and 'Save Link/Target As...'), a file containing the encrypted ASCII codes, and the knowledge that the plain text must contain
 common English words, decrypt the message and find the sum of the ASCII values in the original text."
   (:require [midje.sweet    :as m]
-            [crypto.c6      :as c6]
+            [crypto.key     :as key]
             [crypto.xor     :as xor]
             [clojure.string :as s]))
 
@@ -32,7 +32,7 @@ common English words, decrypt the message and find the sum of the ASCII values i
 (def ascii-encrypted (-> "./resources/euler-59-cipher"
                          load-f))
 
-(def key-cipher (c6/compute-key ascii-encrypted size-key))
+(def key-cipher (key/compute-key ascii-encrypted size-key))
 
 (def ascii-decrypted (xor/decrypt {:key key-cipher
                                    :msg ascii-encrypted}))

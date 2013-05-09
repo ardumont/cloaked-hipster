@@ -28,117 +28,25 @@ g. Solve each block as if it was single-character XOR. You already have code to 
 
 e. For each block, the single-byte XOR key that produces the best looking histogram is the
  repeating-key XOR key byte for that block. Put them together and you have the key."
-  (:require [midje.sweet      :as m]
-            [crypto.c1        :as c1]
-            [crypto.distance  :as distance]
-            [crypto.file      :as file]
-            [crypto.byte      :as byte]
-            [crypto.ascii     :as ascii]
-            [crypto.hex       :as hex]
-            [crypto.block     :as block]
-            [crypto.frequency :as frequency]
-            [crypto.char      :as char]
-            [crypto.math      :as math]
-            [crypto.xor       :as xor]
-            [clojure.string   :as s]
-            [incanter
-             [core            :as icore]
-             [charts          :as icharts]
-             [datasets        :as idata]]))
+  (:require [midje.sweet :as m]
+            [crypto
+             [xor   :as xor]
+             [key   :as key]
+             [ascii :as ascii]
+             [c1    :as c1]
+             [file  :as file]
+             [hex   :as hex]]))
 
-(def hex-input (-> "./resources/base64-encoded"
-                     file/load-simple
-                     c1/decode))
-
-(def byte-input (hex/to-bytes hex-input))
-
-(def ^{:doc "threshold from which we have a multiple of the key length"}
-  threshold 3/50)
-
-(defn keysize
-  "Given an encrypted message and a range test, compute the potential key size."
-  [encrypted-msg range-test]
-  (->> (for [n range-test
-             :let [freq (->> encrypted-msg
-                             (block/shift n)
-                             (frequency/frequency-equals encrypted-msg))]
-             :when (< threshold freq)]
-         n)
-       math/lgcd))
+(defn break-repeating-key-xor
+  "Given a byte input encoded, break the key and return the decrypted message"
+  [input]
+  (xor/decrypt {:key (-> input key/compute-key ascii/to-bytes)
+                :msg input}))
 
 (m/fact
-  (let [msg-to-encrypt "Let's continue our assumption that this text file is written in English. Therefore, we know which words are the most common in this language. We also know that each byte represents a character that stands for a letter or punctuation mark in the text. So it has a meaning. Because in every text different parts and words appear multiple times, we can use an algorithm that applies XOR until we get a meaningful text-file. This stands for a text file that does not contain gibberish."]
-    (-> {:key "this is no longer a secret"
-         :msg msg-to-encrypt}
-        xor/encrypt-bytes
-        (keysize (range 2 50))) => (count "this is no longer a secret")
-    (-> {:key "secret"
-         :msg msg-to-encrypt}
-        xor/encrypt-bytes
-        (keysize (range 2 50))) => (count "secret")
-    (-> {:key "the key or the message must be long enough"
-         :msg msg-to-encrypt}
-        xor/encrypt-bytes
-        (keysize (range 2 44))) => (count "the key or the message must be long enough")
-    (-> {:key "yet another secret and some more secret"
-         :msg msg-to-encrypt}
-        xor/encrypt-bytes
-        (keysize (range 2 40))) => (count "yet another secret and some more secret")))
-
-;; f. Now transpose the blocks: make a block that is the first byte of every block, and a block
-;; that is the second byte of every block, and so on.
-
-(defn transpose-blocks
-  "Given a byte input and a key size, return the list of byte blocks transposed."
-  [byte-input key-size]
-  (->> byte-input
-       (map-indexed (fn [i b] [i b]))
-       (reduce
-        (fn [m [i b]]
-          (let [idx (if (zero? i) 0 (mod i key-size))]
-            (update-in m [idx] conj b)))
-        (sorted-map))
-       (map (comp reverse second))))
-
-(m/fact
-  (transpose-blocks (range 0 20) 4) => [(range 0 20 4)
-                                        (range 1 20 4)
-                                        (range 2 20 4)
-                                        (range 3 20 4)])
-
-;; e. For each block, the single-byte XOR key that produces the best looking histogram is the
-;;  repeating-key XOR key byte for that block. Put them together and you have the key.
-
-;; f. Now transpose the blocks: make a block that is the first byte of every block, and a block
-;; that is the second byte of every block, and so on.
-
-;; g. Solve each block as if it was single-character XOR. You already have code to do this.
-
-(defn compute-key
-  "Given a byte-input, compute its keysize and try and compute the key by transposing block of keysize."
-  ([byte-input]
-     (->> (range 2 40)
-          (keysize byte-input)
-          (compute-key byte-input)))
-  ([byte-input key-size]
-     (->> (transpose-blocks byte-input key-size)
-          (map (comp first xor/decrypt-brute-force))
-          (s/join ""))))
-
-(m/fact
-  (let [msg-to-encrypt "Let's continue our assumption that this text file is written in English. Therefore, we know which words are the most common in this language. We also know that each byte represents a character that stands for a letter or punctuation mark in the text. So it has a meaning. Because in every text different parts and words appear multiple times, we can use an algorithm that applies XOR until we get a meaningful text-file. This stands for a text file that does not contain gibberish."]
-    (-> {:key "secret"
-         :msg msg-to-encrypt}
-        xor/encrypt-bytes
-        (compute-key (count "secret"))) => "secret"
-    (-> {:key "secret"
-         :msg msg-to-encrypt}
-        xor/encrypt-bytes
-        compute-key)                    => "secret"))
-
-(comment
-  (xor/decrypt-bytes {:key "yet fnother'secrev and some mor} secret"
-                      :msg (-> {:key "yet another secret and some more secret"
-                                :msg msg-to-encrypt}
-                               xor/encrypt-bytes)})
-)
+  (-> "./resources/base64-encoded"
+      file/load-simple
+      c1/decode
+      hex/to-bytes
+      break-repeating-key-xor)
+  => "I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \n")
