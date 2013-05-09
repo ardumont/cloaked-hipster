@@ -57,18 +57,19 @@
                   :msg "Cooking MC's like a pound of bacon"}) => [27 55 55 51 49 54 63 120 21 27 127 43 120 52 49 51 61 120 57 120 40 55 45 54 60 120 55 62 120 58 57 59 55 54] )
 
 (defn encrypt
-  "Given a map {:key 'ascii key' :msg 'ascii message'}, encode the key message into hexadecimal then encrypt the hex msg with the hex key."
+  "Given a map {:key 'ascii key' :msg 'ascii message'}, encode the message with the key key."
   [m]
-  (hex/encode (encrypt-bytes m)))
+  (encrypt-bytes m))
 
 (m/fact
-  (encrypt {:key "X"
-            :msg "Cooking MC's like a pound of bacon"}) => "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
+  (hex/encode
+   (encrypt {:key "X"
+             :msg "Cooking MC's like a pound of bacon"})) => "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
 (defn decrypt-bytes
   "Given a map {:key 'ascii key' :msg 'hex encoded message'}, decode the encrypted message and return a byte sequence."
   [{:keys [msg key]}]
-  (xor (hex/to-bytes msg) (ascii/to-bytes key)))
+  (xor msg (ascii/to-bytes key)))
 
 (m/fact
   (decrypt-bytes {:key "X"
@@ -114,31 +115,27 @@
 (m/fact :using-my-own-food
   (-> {:key "X"
        :msg "Cooking MC's like a pound of bacon"}
-      encrypt
-      hex/to-bytes
+      encrypt-bytes
       decrypt-brute-force)
   => ["X" "Cooking MC's like a pound of bacon"])
 
 (m/fact :other-checking-to-bullet-proof
   (-> {:key "a"
        :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"}
-      encrypt
-      hex/to-bytes
+      encrypt-bytes
       decrypt-brute-force)
   => ["a" "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"])
 
 (m/fact :other-checking-to-bullet-proof
   (-> {:key "z"
        :msg "There are no more trouble in paradise"}
-      encrypt
-      hex/to-bytes
+      encrypt-bytes
       decrypt-brute-force)
   => ["z" "There are no more trouble in paradise"])
 
 (m/fact :other-checking-to-bullet-proof
   (-> {:key " "
        :msg "hello dude"}
-      encrypt
-      hex/to-bytes
+      encrypt-bytes
       decrypt-brute-force)
   => [" " "hello dude"])
