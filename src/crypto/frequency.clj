@@ -4,9 +4,8 @@
             [crypto.byte  :as byte]
             [clojure.set  :as set]
             [crypto.char  :as char]
-            [crypto.hex   :as hex]
-            [crypto.util  :as util]
-            [crypto.ascii :as ascii]))
+            [crypto.math  :as math]
+            [crypto.block :as block]))
 
 (def ^{:doc "English letter frequency - http://www.math.cornell.edu/~mec/2003-2004/cryptography/subs/frequencies.html"}
   frequency
@@ -19,10 +18,10 @@
             [\j 0.10]  [\J 0.10]  [\z 0.07] [\Z 0.07] [\space 0.1]]))
 
 (m/fact
-  (->> (util/range-char \a \z)
+  (->> (crypto.util/range-char \a \z)
        (map frequency))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07]
-  (->> (util/range-char \A \Z)
+  (->> (crypto.util/range-char \A \Z)
        (map frequency))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
@@ -33,10 +32,10 @@
    frequency))
 
 (m/fact
-  (->> (util/range \a \z)
+  (->> (crypto.util/range \a \z)
        (map (comp byte-freq int)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07]
-    (->> (util/range \A \Z)
+    (->> (crypto.util/range \A \Z)
          (map (comp byte-freq int)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
@@ -47,11 +46,11 @@
    frequency))
 
 (m/fact
-  (->> (util/range \a \z)
+  (->> (crypto.util/range \a \z)
        (map (comp hex-frequency byte/to-hex)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07]
-    (->> (util/range \A \Z)
-         (map (comp hex-frequency byte/to-hex)))
+  (->> (crypto.util/range \A \Z)
+       (map (comp hex-frequency byte/to-hex)))
   => [8.12 1.49 2.71 4.32 12.02 2.30 2.03 5.92 7.31 0.10 0.69 3.98 2.61 6.95 7.68 1.82 0.11 6.02 6.28 9.10 2.88 1.11 2.09 0.17 2.11 0.07])
 
 (defn- compute-hex-freq
@@ -67,7 +66,7 @@
           {}))))
 
 (m/future-fact :does-not-understand-why-this-does-work-yet
-  (compute-hex-freq (hex/encode "hello")) => (m/just {"6f" 0.1, "6c" 0.2, "65" 0.1, "68" 0.1}))
+  (compute-hex-freq (crypto.hex/encode "hello")) => (m/just {"6f" 0.1, "6c" 0.2, "65" 0.1, "68" 0.1}))
 
 (m/fact "`just` provides extended equality"
   {:a 1, :b 2, :c "some text"} => (m/just {:a 1, :b 2, :c #"text"}))
@@ -84,7 +83,7 @@
           {}))))
 
 (m/future-fact :does-not-understand-why-this-does-work-yet
-  (compute-freq (ascii/to-bytes "hello")) => (m/just {111 0.2 108 0.4 101 0.2 104 0.2}))
+  (compute-freq (crypto.ascii/to-bytes "hello")) => (m/just {111 0.2 108 0.4 101 0.2 104 0.2}))
 
 (defn- diff-freq
   "Compute the difference between two frequency maps into a difference frequency map."
@@ -116,4 +115,51 @@
        sum-diff-map))
 
 (m/fact
-  (compute-diff (ascii/to-bytes "hello")) => 199.07999998509888)
+  (compute-diff (crypto.ascii/to-bytes "hello")) => 199.07999998509888)
+
+(defn- frequency-equals
+  "Compute the frequency of same characters between 2 sequence."
+  [b0 b1]
+  (let [l (max (count b0) (count b1))
+        s (->> (map (fn [c0 c1] (if (= c0 c1) 1 0)) b0 b1)
+               (apply +))]
+    (/ s l)))
+
+(m/fact
+  (frequency-equals "123 hello" "123 salut") => 5/9
+  (frequency-equals "123 hello" "123 hello") => 1
+  (frequency-equals "123 hello" "123")       => 1/3
+  (frequency-equals "123"       "123 hello") => 1/3)
+
+(def ^{:doc "threshold from which we have a multiple of the key length"}
+  threshold 3/50)
+
+(defn keysize
+    "Given an encrypted message and a range test, compute the potential key size."
+    [encrypted-msg range-test]
+    (->> (for [n range-test]
+           (let [frequency (->> encrypted-msg
+                                (block/shift n)
+                                (frequency-equals encrypted-msg))]
+             (if (< threshold frequency) n :k)))
+         (filter number?)
+         math/lgcd))
+
+(m/fact
+  (let [msg-to-encrypt "Let's continue our assumption that this text file is written in English. Therefore, we know which words are the most common in this language. We also know that each byte represents a character that stands for a letter or punctuation mark in the text. So it has a meaning. Because in every text different parts and words appear multiple times, we can use an algorithm that applies XOR until we get a meaningful text-file. This stands for a text file that does not contain gibberish."]
+    (-> {:key "this is no longer a secret"
+         :msg msg-to-encrypt}
+        crypto.xor/encrypt-bytes
+        (keysize (range 2 50))) => (count "this is no longer a secret")
+    (-> {:key "secret"
+         :msg msg-to-encrypt}
+        crypto.xor/encrypt-bytes
+        (keysize (range 2 50))) => (count "secret")
+    (-> {:key "the key or the message must be long enough"
+         :msg msg-to-encrypt}
+        crypto.xor/encrypt-bytes
+        (keysize (range 2 44))) => (count "the key or the message must be long enough")
+    (-> {:key "yet another secret and some more secret"
+         :msg msg-to-encrypt}
+        crypto.xor/encrypt-bytes
+        (keysize (range 2 40))) => (count "yet another secret and some more secret")))
