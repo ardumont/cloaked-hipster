@@ -1,8 +1,5 @@
 (ns crypto.c4
-  "4. Detect single-character XOR
-One of the 60-character strings at:
-  https://gist.github.com/3132713
-has been encrypted by single-character XOR. Find it. (Your code from #3 should help.)"
+  "Detect single-character XOR from a list of hex-encoded strings."
   (:require [midje.sweet    :as m]
             [crypto.char    :as char]
             [crypto.xor     :as xor]
