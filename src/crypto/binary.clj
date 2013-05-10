@@ -11,24 +11,26 @@
 (defn- comp-bits-sequence
   "Complement a bits sequence by providing the policy through the complement-fn function."
   [n b complement-fn]
-  (->> (iterate complement-fn b)
-       (drop-while #(not= n (count %)))
-       first))
+  (let [c (Math/abs (- n (count b)))]
+    (if (= 0 c)
+      b
+      (->> (repeat c 0)
+           (complement-fn b)))))
 
 (m/fact
-  (comp-bits-sequence 8  [1 1 1]           (partial cons 0)) => [0 0 0 0 0 1 1 1]
-  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] (partial cons 0)) => [0 0 0 0 1 0 0 0]
-  (comp-bits-sequence 4  [1 1 1]           (partial cons 0)) => [0 1 1 1]
-  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] (partial cons 0)) => [0 0 0 0 0 0 1 0 0 0]
-  (comp-bits-sequence 8  [1 1 1]           #(conj % 0))      => [1 1 1 0 0 0 0 0]
-  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] #(conj % 0))      => [0 0 0 0 1 0 0 0]
-  (comp-bits-sequence 4  [1 1 1]           #(conj % 0))      => [1 1 1 0]
-  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] #(conj % 0))      => [0 0 0 0 1 0 0 0 0 0])
+  (comp-bits-sequence 8  [1 1 1]           #(concat %2 %)) => [0 0 0 0 0 1 1 1]
+  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] #(concat %2 %)) => [0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 4  [1 1 1]           #(concat %2 %)) => [0 1 1 1]
+  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] #(concat %2 %)) => [0 0 0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 8  [1 1 1]           concat)         => [1 1 1 0 0 0 0 0]
+  (comp-bits-sequence 8  [0 0 0 0 1 0 0 0] concat)         => [0 0 0 0 1 0 0 0]
+  (comp-bits-sequence 4  [1 1 1]           concat)         => [1 1 1 0]
+  (comp-bits-sequence 10 [0 0 0 0 1 0 0 0] concat)         => [0 0 0 0 1 0 0 0 0 0])
 
 (defn comp-before
   "Complement by the most significant side (head) a bits sequence to n bits (if necessary)."
   [n b]
-  (comp-bits-sequence n b (partial cons 0)))
+  (comp-bits-sequence n b #(concat %2 %)))
 
 (m/fact
   (comp-before 8 [1 1 1])            => [0 0 0 0 0 1 1 1]
@@ -39,7 +41,7 @@
 (defn comp-after
   "Complement by the least significant side (tail) a bits sequence to n bits (if necessary)."
   [n b]
-  (comp-bits-sequence n b #(concat % [0])))
+  (comp-bits-sequence n b concat))
 
 (m/fact
   (comp-after 10 [1 1 1 1 1 1 1 1]) => [1 1 1 1 1 1 1 1 0 0]
