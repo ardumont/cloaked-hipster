@@ -18,12 +18,12 @@
   (shift -1 [:a :b :c])          => [:c :a :b])
 
 (defn transpose
-  "Given a byte input and a key size, return the list of byte blocks transposed."
-  [byte-input key-size]
-  (->> byte-input
+  "Given a data vector v and a size n, return the data vector transposed in row, column vector."
+  [v n]
+  (->> v
        (reduce
         (fn [[i m] b]
-          (let [idx (if (zero? i) 0 (mod i key-size))]
+          (let [idx (if (zero? i) 0 (mod i n))]
             [(+ 1 i) (update-in m [idx] conj b)]))
         [0 (sorted-map)])
        second
