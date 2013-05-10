@@ -115,3 +115,21 @@
   => [[[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]] [[1 1 :a :a] [2 1 :a :b] [3 1 :a :c]] [[1 :a 1 :a] [2 :b 1 :a] [3 :c 1 :a]]
       [[2 :b 1 :a] [2 :b 2 :b] [2 :b 3 :c]] [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]] [[1 :a 2 :b] [2 :b 2 :b] [3 :c 2 :b]]
       [[3 :c 1 :a] [3 :c 2 :b] [3 :c 3 :c]] [[1 3 :c :a] [2 3 :c :b] [3 3 :c :c]] [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]]])
+
+(defn transpose
+  "Given a byte input and a key size, return the list of byte blocks transposed."
+  [byte-input key-size]
+  (->> byte-input
+       (map-indexed (fn [i b] [i b]))
+       (reduce
+        (fn [m [i b]]
+          (let [idx (if (zero? i) 0 (mod i key-size))]
+            (update-in m [idx] conj b)))
+        (sorted-map))
+       (map (comp reverse second))))
+
+(m/fact
+  (transpose (range 0 20) 4) => [(range 0 20 4)
+                                 (range 1 20 4)
+                                 (range 2 20 4)
+                                 (range 3 20 4)])

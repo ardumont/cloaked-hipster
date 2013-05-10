@@ -42,24 +42,6 @@
         xor/encrypt-bytes
         (keysize (range 2 40))) => (count "yet another secret and some more secret")))
 
-(defn transpose-blocks
-  "Given a byte input and a key size, return the list of byte blocks transposed."
-  [byte-input key-size]
-  (->> byte-input
-       (map-indexed (fn [i b] [i b]))
-       (reduce
-        (fn [m [i b]]
-          (let [idx (if (zero? i) 0 (mod i key-size))]
-            (update-in m [idx] conj b)))
-        (sorted-map))
-       (map (comp reverse second))))
-
-(m/fact
-  (transpose-blocks (range 0 20) 4) => [(range 0 20 4)
-                                        (range 1 20 4)
-                                        (range 2 20 4)
-                                        (range 3 20 4)])
-
 (defn compute-key
   "Given a byte-input, compute its keysize and try and compute the key by transposing block of keysize."
   ([byte-input]
@@ -67,7 +49,7 @@
           (keysize byte-input)
           (compute-key byte-input)))
   ([byte-input key-size]
-     (->> (transpose-blocks byte-input key-size)
+     (->> (block/transpose byte-input key-size)
           (map (comp first xor/decrypt-brute-force))
           (string/join ""))))
 
