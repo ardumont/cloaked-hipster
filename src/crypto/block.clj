@@ -3,22 +3,6 @@
   (:require [midje.sweet  :as m]
             [crypto.ascii :as ascii]))
 
-(defn split
-  "Compute 2 n-block chars, [i..i+n] and [i+n+1..i+2n]"
-  [i n data]
-  (->> data
-       (drop i)
-       (take (* 2 n))
-       (partition-all n)))
-
-(m/fact
-  (split 0 3 (mapcat ascii/to-bits "hello, dude")) => [[0 1 1] [0 1 0]]
-  (split 0 6 (mapcat ascii/to-bits "hello, dude")) => [[0 1 1 0 1 0] [0 0 0 1 1 0]]
-  (split 2 2 "hello world!")                       => [[\l \l] [\o \space]]
-  (split 0 2 "he")                                 => [[\h \e]]
-  (split 0 6 "hello world! <6b")                   => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]]
-  (split 0 8 "hello world!")                       => [[\h \e \l \l \o \space \w \o] [\r \l \d \!]])
-
 (defn shift
   "n-shift the sequence of data - positive value shift to the right and negative value shift to the left. The shift is circular."
   [n data]
