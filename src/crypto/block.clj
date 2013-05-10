@@ -19,26 +19,6 @@
   (split 0 6 "hello world! <6b")                   => [[\h \e \l \l \o \space] [\w \o \r \l \d \!]]
   (split 0 8 "hello world!")                       => [[\h \e \l \l \o \space \w \o] [\r \l \d \!]])
 
-(defn make-blocks
-  "Make nb-blocks of size n with the string s. If nb-blocks is not specified, return as much n-blocks as possible."
-  ([n s]
-     (make-blocks (-> s count (/ n) int) n s))
-   ([nb-blocks n s]
-      (let [l (- nb-blocks (mod nb-blocks 2))]
-        (for [i (range 0 l)] (split (* n i) n s)))))
-
-(m/fact
-  (make-blocks 4 2 "hello worl")                                       => [[[\h \e] [\l \l]]
-                                                                           [[\l \l] [\o \space]]
-                                                                           [[\o \space] [\w \o]]
-                                                                           [[\w \o] [\r \l]]]
-  (make-blocks 5 "little by little, we close the line")                => [[[\l \i \t \t \l] [\e \space \b \y \space]]
-                                                                           [[\e \space \b \y \space] [\l \i \t \t \l]]
-                                                                           [[\l \i \t \t \l] [\e \, \space \w \e]]
-                                                                           [[\e \, \space \w \e] [\space \c \l \o \s]]
-                                                                           [[\space \c \l \o \s] [\e \space \t \h \e]]
-                                                                           [[\e \space \t \h \e] [\space \l \i \n \e]]])
-
 (defn shift
   "n-shift the sequence of data - positive value shift to the right and negative value shift to the left. The shift is circular."
   [n data]
