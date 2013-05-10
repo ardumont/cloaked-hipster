@@ -1,7 +1,6 @@
 (ns crypto.block
-  "Block"
-  (:require [midje.sweet  :as m]
-            [crypto.ascii :as ascii]))
+  "Block manipulations."
+  (:require [midje.sweet :as m]))
 
 (defn shift
   "n-shift the sequence of data - positive value shift to the right and negative value shift to the left. The shift is circular."
