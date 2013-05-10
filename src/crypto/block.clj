@@ -38,20 +38,6 @@
                                                                            [[\e \, \space \w \e] [\space \c \l \o \s]]
                                                                            [[\space \c \l \o \s] [\e \space \t \h \e]]
                                                                            [[\e \space \t \h \e] [\space \l \i \n \e]]])
-;; (defn make-blocks
-;;   "Make nb-blocks of size n with the string s. If nb-blocks is not specified, return as much n-blocks as possible."
-;;   ([n s]
-;;      (make-blocks (-> s count (/ n) int) n s))
-;;    ([nb-blocks n s]
-;;       (let [l (* 2 nb-blocks)]
-;;         (for [i (range 0 l 2)] (split (* n i) n s)))))
-
-;; (m/fact
-;;   (make-blocks 2 2 "hello worl")                                       => [[[\h \e] [\l \l]]
-;;                                                                            [[\o \space] [\w \o]]]
-;;   (make-blocks 3 5 "little by little, we close the line")              => [[[\l \i \t \t \l] [\e \space \b \y \space]]
-;;                                                                            [[\l \i \t \t \l] [\e \, \space \w \e]]
-;;                                                                            [[\space \c \l \o \s] [\e \space \t \h \e]]])
 
 (defn shift
   "n-shift the sequence of data - positive value shift to the right and negative value shift to the left. The shift is circular."
@@ -82,39 +68,6 @@
   (shift-and-lose 3 [:a :b :c :d :e :f]) => [:d :e :f]
   (shift-and-lose 1 [:a :b :c :d :e :f]) => [:b :c :d :e :f]
   (shift-and-lose -3 [:a :b :d :e :f])   => [:d :e :f])
-
-(defn transpose
-  "Given an input of data, inject a block of data at the nth position"
-  [n block data]
-  (let [l (-> block count inc)]
-    (->> data
-         (map (fn [seq]
-                (->> seq
-                     (split-at (mod n l))
-                     (#(let [[h t] %]
-                         (concat h (conj t block))))
-                     flatten))))))
-
-(m/fact
-  (transpose 0 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
-  (transpose 1 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 1 :a :a] [2 1 :a :b] [3 1 :a :c]]
-  (transpose 2 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [2 :b 1 :a] [3 :c 1 :a]]
-  (transpose 3 [1 :a] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]]
-  (transpose 1 [2 :b] [[1 :a] [2 :b] [3 :c]]) => [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]]
-  (transpose 2 [3 :c] [[1 :a] [2 :b] [3 :c]]) => [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]])
-
-(defn compute-possible-transpositions
-  "Given a blocks, compute all possible transpositions."
-  [blocks]
-  (for [b blocks
-        i (range 0 (count blocks))]
-    (transpose i b blocks)))
-
-(m/fact
-  (compute-possible-transpositions [[1 :a] [2 :b] [3 :c]])
-  => [[[1 :a 1 :a] [1 :a 2 :b] [1 :a 3 :c]] [[1 1 :a :a] [2 1 :a :b] [3 1 :a :c]] [[1 :a 1 :a] [2 :b 1 :a] [3 :c 1 :a]]
-      [[2 :b 1 :a] [2 :b 2 :b] [2 :b 3 :c]] [[1 2 :b :a] [2 2 :b :b] [3 2 :b :c]] [[1 :a 2 :b] [2 :b 2 :b] [3 :c 2 :b]]
-      [[3 :c 1 :a] [3 :c 2 :b] [3 :c 3 :c]] [[1 3 :c :a] [2 3 :c :b] [3 3 :c :c]] [[1 :a 3 :c] [2 :b 3 :c] [3 :c 3 :c]]])
 
 (defn transpose
   "Given a byte input and a key size, return the list of byte blocks transposed."
