@@ -2,40 +2,39 @@
   "Bytes manipulation namespace"
   (:require [midje.sweet    :as m]
             [clojure.string :as s]
-            [crypto.binary  :as binary]))
+            [crypto.binary  :as binary]
+            [clojure.string :as string]))
 
-(defn encode
-  "string to byte[]"
-  [s]
-  (->> s
-       (map (comp byte int))
-       byte-array))
-
-(m/fact
-  (-> "clojure rocks!" encode String.) => "clojure rocks!")
-
-(defn get-byte
-  "Given a byte-array and an index, return the byte at the index i"
-  [abytes i]
-  (aget abytes i))
+(defn to-signed-byte
+  "Small utility to coerce an unsigned byte into a signed byte (jvm expects it)."
+  [x]
+  (.byteValue x))
 
 (m/fact
-  (let [s "clojure rocks!"
-        a (encode s)
-        l (.length s)]
-    (map #(get-byte a %) (range 0 l))) => [99 108 111 106 117 114 101 32 114 111 99 107 115 33])
+  (to-signed-byte 0)   => 0
+  (to-signed-byte 128) => -128
+  (to-signed-byte 255) => -1)
 
-(defn decode
+(defn to-bytes-array
+  "Given a seq of int, compute the byte[] equivalent."
+  [byts]
+  (->> byts
+       (map to-signed-byte)
+       byte-array
+       bytes))
+
+(m/fact
+  (String. (to-bytes-array "012"))       => "012"
+  (String. (to-bytes-array [48 49 50]))  => "012")
+
+(defn to-ascii
   "byte[] to string"
   [b]
   (->> b
        (map char)
        (s/join "")))
 
-(def to-ascii decode)
-
 (m/fact
-  (decode [99 108 111 106 117 114 101 32 114 111 99 107 115 33]) => "clojure rocks!"
   (to-ascii [99 108 111 106 117 114 101 32 114 111 99 107 115 33]) => "clojure rocks!")
 
 (def to-bits ^{:doc "Transform a byte sequence into a 8-bits word binary sequence."}

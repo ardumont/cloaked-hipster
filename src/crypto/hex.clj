@@ -34,7 +34,7 @@
   [s]
   (->> s
        to-bytes
-       byte/decode
+       byte/to-ascii
        (s/join "")))
 
 (m/fact
