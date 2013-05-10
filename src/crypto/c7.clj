@@ -1,7 +1,5 @@
 (ns crypto.c7
-  "AES in ECB Mode
-Has been encrypted via AES-128 in ECB mode under the key YELLOW SUBMARINE (16 bytes long).
-Decrypt it. Easiest way: Use OpenSSL::Cipher and give it AES-128-ECB as the cipher."
+  "AES in ECB Mode"
   (:require [midje.sweet    :as m]
             [crypto.base64  :as b64]
             [crypto.file    :as file]
