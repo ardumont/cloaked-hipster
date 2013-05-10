@@ -54,21 +54,6 @@
   (shift 1  [:a :b :c :d :e :f]) => [:b :c :d :e :f :a]
   (shift -1 [:a :b :c])          => [:c :a :b])
 
-(defn shift-and-lose
-  "n-shift the sequence of data. Positive value shifts to the right, negative to the right. The shift is not circular, so data are pushed outside and are lost."
-  [n data]
-  (cond (= 0 n)  data
-        (pos? n) (drop n data)
-        :else    (->> data
-                      (shift n)
-                      (take (* -1 n)))))
-
-(m/fact
-  (shift-and-lose 0 [:a :b])             => [:a :b]
-  (shift-and-lose 3 [:a :b :c :d :e :f]) => [:d :e :f]
-  (shift-and-lose 1 [:a :b :c :d :e :f]) => [:b :c :d :e :f]
-  (shift-and-lose -3 [:a :b :d :e :f])   => [:d :e :f])
-
 (defn transpose
   "Given a byte input and a key size, return the list of byte blocks transposed."
   [byte-input key-size]
