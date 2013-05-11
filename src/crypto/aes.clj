@@ -22,13 +22,15 @@
   (SecretKeySpec. (.getBytes s) "AES"))
 
 (defn encrypt
+  "Given a string s and a key, encrypt s with key using AES ECB."
   [s key]
   (let [cipher (doto (Cipher/getInstance "AES/ECB/NoPadding")
                  (.init Cipher/ENCRYPT_MODE (secret key)))]
     (.doFinal cipher (.getBytes s "UTF-8"))))
 
 (defn decrypt
-  [buf key]
+  "Given a byte array and a key, decrypt the byte array with key using AES ECB."
+  [bytes key]
   (let [cipher (doto (Cipher/getInstance "AES/ECB/NoPadding")
                  (.init Cipher/DECRYPT_MODE (secret key)))]
-    (String. (.doFinal cipher buf) "UTF-8")))
+    (String. (.doFinal cipher bytes) "UTF-8")))
