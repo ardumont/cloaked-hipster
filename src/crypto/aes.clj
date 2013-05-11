@@ -34,3 +34,8 @@
   (let [cipher (doto (Cipher/getInstance "AES/ECB/NoPadding")
                  (.init Cipher/DECRYPT_MODE (secret key)))]
     (String. (.doFinal cipher bytes) "UTF-8")))
+
+(m/fact
+  (-> "this is a secret"
+      (encrypt "may the force be")
+      (decrypt "may the force be")) => "this is a secret")
