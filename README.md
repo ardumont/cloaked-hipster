@@ -11,3 +11,9 @@ For me to learn but everybody can learn too!
 Copyright © 2013 committers
 
 Distributed under the Eclipse Public License, the same as Clojure.
+
+## Tests
+
+```sh
+lein midje
+```
