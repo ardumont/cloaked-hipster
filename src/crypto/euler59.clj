@@ -18,24 +18,30 @@ common English words, decrypt the message and find the sum of the ASCII values i
   (:require [midje.sweet    :as m]
             [crypto.key     :as key]
             [crypto.xor     :as xor]
-            [clojure.string :as s]))
+            [clojure.string :as string]))
 
-(def size-key 3)
+(defn load-csv
+  "Compute a comma separated bytes values into a clojure byte vector."
+  [s]
+  (read-string (str "[" (string/replace s #",|\n" " ") "]")))
+
+(m/fact
+  (load-csv "1, 2, 4, 8") => [1 2 4 8])
 
 (defn load-f "Load the file"
   [filepath]
-  (let [s (-> filepath
-              slurp
-              (s/replace #",|\n" " "))]
-    (read-string (str "[" s "]"))))
+  (-> filepath
+      slurp
+      load-csv))
 
-(def ascii-encrypted (-> "./resources/euler-59-cipher"
-                         load-f))
+(def ascii-encrypted (load-f "./resources/euler-59-cipher"))
 
-(def key-cipher (key/compute-key ascii-encrypted size-key))
+(def key-cipher (key/compute-key ascii-encrypted 3))
 
 (def ascii-decrypted (xor/decrypt {:key key-cipher
                                    :msg ascii-encrypted}))
 
 (m/fact
-  (apply + (crypto.ascii/to-bytes ascii-decrypted)) => 107359)
+  (->> ascii-decrypted
+       crypto.ascii/to-bytes
+       (apply +)) => 107359)
