@@ -1,10 +1,6 @@
 (ns crypto.aes
   "AES manipulations."
-  (:require [midje.sweet   :as m]
-            [crypto.block  :as block]
-            [crypto.byte   :as byte]
-            [crypto.xor    :as xor]
-            [crypto.base64 :as b64])
+  (:require [midje.sweet :as m])
   (:import [java.security Key]
            [javax.crypto Cipher]
            [javax.crypto.spec SecretKeySpec]))

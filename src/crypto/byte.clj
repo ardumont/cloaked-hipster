@@ -24,7 +24,6 @@
        bytes))
 
 (m/fact
-  (String. (to-bytes-array "012"))       => "012"
   (String. (to-bytes-array [48 49 50]))  => "012")
 
 (defn to-ascii
