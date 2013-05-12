@@ -1,7 +1,6 @@
 (ns crypto.math
   "Some math utility functions. From old clojure contrib."
   (:require [midje.sweet                :as m]
-            [crypto.block               :as block]
             [clojure.math.numeric-tower :as math]))
 
 (defn lgcd
@@ -14,6 +13,7 @@
       (recur allgcd))))
 
 (m/fact
+  (lgcd [])                        => nil
   (lgcd [12 18 24 30 36 42 48])    => 6
   (lgcd [12 14 18 24 30 36 42 48]) => 2
   (lgcd [1 5 3])                   => 1
