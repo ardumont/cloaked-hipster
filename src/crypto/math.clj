@@ -6,7 +6,7 @@
 (defn lgcd
   "Compute the gcd from a list. Return such gcd if compatible or else return nil"
   [l]
-  (if (= 1 (count l))
+  (if (or (= [] l) (= 1 (count l)))
     (first l)
     (let [r      (rest l)
           allgcd (map (fn [n0 n1] (math/gcd n0 n1)) l r)]
