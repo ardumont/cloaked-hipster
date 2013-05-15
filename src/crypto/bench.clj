@@ -103,3 +103,19 @@
 ;; 	low-mild	 1 (1,6667 %)
 ;;  Variance from outliers : 1,6389 % Variance is slightly inflated by outliers
 ;; nil
+
+;;;;;;;;;;;;;;;;;;;;;;;;;; c6
+
+;; crypto.bench> (crit/bench (c6/break-repeating-key-xor-in-b64-encoded "./resources/base64-encoded"))
+;; Evaluation count : 60 in 60 samples of 1 calls.
+;;              Execution time mean : 24,323362 sec
+;;     Execution time std-deviation : 184,298216 ms
+;;    Execution time lower quantile : 24,171696 sec ( 2,5%)
+;;    Execution time upper quantile : 24,907294 sec (97,5%)
+;;                    Overhead used : 2,348702 ns
+
+;; Found 5 outliers in 60 samples (8,3333 %)
+;; 	low-severe	 2 (3,3333 %)
+;; 	low-mild	 3 (5,0000 %)
+;;  Variance from outliers : 1,6389 % Variance is slightly inflated by outliers
+;; nil
