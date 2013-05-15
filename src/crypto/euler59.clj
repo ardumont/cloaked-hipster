@@ -41,7 +41,35 @@ common English words, decrypt the message and find the sum of the ASCII values i
 (def ascii-decrypted (xor/decrypt {:key key-cipher
                                    :msg ascii-encrypted}))
 
-(m/fact
+(m/future-fact
   (->> ascii-decrypted
        crypto.ascii/to-bytes
        (apply +)) => 107359)
+
+(comment
+
+  (defn decryptions [data]
+    (let [chrs (range (int \a) (inc (int \z)))]
+      (for [a chrs b chrs c chrs]
+        (let [k (cycle [a b c])]
+          (map (fn [a b] (bit-xor a b)) data k)))))
+
+                                        ; Doesn't take much to validate english!
+  (defn possibly-valid? [str]
+    (re-find #"(?i: or )" str))
+
+  (defn eulerize [data]
+    (->> data
+         decryptions
+                                        ; this next step is a massive speedup. Each possible decryption is a
+                                        ; *lazy-seq*, so if I can filter it out without fully executing it,
+                                        ; I can save a lot of work. On my machine, moving the following 3 lines from
+                                        ; inside decryptions to here improved the speed to solution from 2100ms to 33ms.
+         (filter (partial not-any? (partial < (int \z))))
+         (map (comp clojure.string/join (partial map char)))
+         (filter possibly-valid?)
+         first
+         (map int)
+         (apply +)))
+
+  (eulerize ascii-encrypted))
