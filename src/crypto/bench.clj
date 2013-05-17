@@ -29,6 +29,10 @@
 ;;  Variance from outliers : 6,2677 % Variance is slightly inflated by outliers
 ;; nil
 
+;; crypto.bench> (time (hex/to-b64 "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"))
+;; "Elapsed time: 1.388937 msecs"
+;; "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;; c2
 
 ;; crypto.bench> (crit/bench (c2/xor "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965"))
@@ -46,6 +50,10 @@
 ;;  Variance from outliers : 1,6389 % Variance is slightly inflated by outliers
 ;; nil
 
+;; crypto.bench> (time (c2/xor "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965"))
+;; "Elapsed time: 1.232153 msecs"
+;; "746865206b696420646f6e277420706c6179"
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;; c3
 
 ;; crypto.bench> (crit/bench (c3/brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"))
@@ -56,6 +64,10 @@
 ;;    Execution time upper quantile : 348,706638 ms (97,5%)
 ;;                    Overhead used : 2,348702 ns
 ;; nil
+
+;; crypto.bench> (time (c3/brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"))
+;; "Elapsed time: 347.035457 msecs"
+;; ["X" "Cooking MC's like a pound of bacon"]
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;; c4
 
