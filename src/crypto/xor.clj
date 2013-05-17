@@ -23,10 +23,10 @@
   "Compute the xor between the input by (byte) and the key key (byte). No check on key."
   [by0 by1]
   (->> [by0 by1]
-       (map byte/to-bits)
+       (map byte/>bits)
        (apply bitxor)
        (partition 8)
-       (map binary/to-bytes)))
+       (map binary/>bytes)))
 
 (m/fact :one-way-and-back
   (xor-byte [0 1 2 3 4 5] [0 1 2 3 4 5]) => [0 0 0 0 0 0]
@@ -41,15 +41,15 @@
        (xor-byte by)))
 
 (m/fact
-  (xor (hex/to-bytes "abcd") (hex/to-bytes "de"))                                                                   => (hex/to-bytes "7513")
-  (xor (hex/to-bytes "1c0111001f010100061a024b53535009181c") (hex/to-bytes "686974207468652062756c6c277320657965")) => (hex/to-bytes "746865206b696420646f6e277420706c6179")
-  (xor (hex/to-bytes "746865206b696420646f6e277420706c6179") (hex/to-bytes "686974207468652062756c6c277320657965")) => (hex/to-bytes "1c0111001f010100061a024b53535009181c"))
+  (xor (hex/>bytes "abcd") (hex/>bytes "de"))                                                                   => (hex/>bytes "7513")
+  (xor (hex/>bytes "1c0111001f010100061a024b53535009181c") (hex/>bytes "686974207468652062756c6c277320657965")) => (hex/>bytes "746865206b696420646f6e277420706c6179")
+  (xor (hex/>bytes "746865206b696420646f6e277420706c6179") (hex/>bytes "686974207468652062756c6c277320657965")) => (hex/>bytes "1c0111001f010100061a024b53535009181c"))
 
 (defn encrypt-bytes
   "Given a map {:key 'ascii key' :msg 'ascii message'}, encrypt the msg with the hex key and return a byte sequence."
   [{:keys [key msg]}]
   (->> [msg key]
-       (map ascii/to-bytes)
+       (map ascii/>bytes)
        (apply xor)))
 
 (m/fact
@@ -62,14 +62,14 @@
   (encrypt-bytes m))
 
 (m/fact
-  (byte/to-hex
+  (byte/>hex
    (encrypt {:key "X"
              :msg "Cooking MC's like a pound of bacon"})) => "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
 
 (defn decrypt-bytes
   "Given a map {:key 'ascii key' :msg 'hex encoded message'}, decode the encrypted message and return a byte sequence."
   [{:keys [msg key]}]
-  (xor msg (ascii/to-bytes key)))
+  (xor msg (ascii/>bytes key)))
 
 (m/fact
   (decrypt-bytes {:key "X"
@@ -82,7 +82,7 @@
   [m]
   (-> m
       decrypt-bytes
-      byte/to-ascii))
+      byte/>ascii))
 
 (m/fact
   (decrypt {:key "X"
@@ -106,10 +106,10 @@
        first                                       ;; first element is the smallest frequency difference
        (#(let [[comp-diff [key secret]] %]         ;; use destructuring to go and fetch what we want (I let other stuff to explain)
            [((comp str char) key)
-            (byte/to-ascii secret)]))))            ;; key + decoded secret key in ascii
+            (byte/>ascii secret)]))))            ;; key + decoded secret key in ascii
 
 (m/fact
-  (decrypt-brute-force (hex/to-bytes "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"))
+  (decrypt-brute-force (hex/>bytes "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"))
   => ["X" "Cooking MC's like a pound of bacon"])
 
 (m/fact :using-my-own-food
@@ -119,21 +119,21 @@
       decrypt-brute-force)
   => ["X" "Cooking MC's like a pound of bacon"])
 
-(m/fact :other-checking-to-bullet-proof
+(m/fact :other-checking->bullet-proof
   (-> {:key "a"
        :msg "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"}
       encrypt-bytes
       decrypt-brute-force)
   => ["a" "There are some trouble in paradise, the sentence needs to be very long for it to be decrypted"])
 
-(m/fact :other-checking-to-bullet-proof
+(m/fact :other-checking->bullet-proof
   (-> {:key "z"
        :msg "There are no more trouble in paradise"}
       encrypt-bytes
       decrypt-brute-force)
   => ["z" "There are no more trouble in paradise"])
 
-(m/fact :other-checking-to-bullet-proof
+(m/fact :other-checking->bullet-proof
   (-> {:key " "
        :msg "hello dude"}
       encrypt-bytes

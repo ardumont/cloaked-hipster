@@ -11,14 +11,14 @@
 (defn break-repeating-key-xor
   "Given a byte input encoded, break the key and return the decrypted message"
   [input]
-  (xor/decrypt {:key (-> input key/compute-key ascii/to-bytes)
+  (xor/decrypt {:key (-> input key/compute-key ascii/>bytes)
                 :msg input}))
 
 (defn break-repeating-key-xor-in-b64-encoded
   [filepath]
   (-> filepath
       file/ld-simple
-      b64/to-bytes
+      b64/>bytes
       break-repeating-key-xor))
 
 (m/fact

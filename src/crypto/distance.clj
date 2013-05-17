@@ -34,22 +34,22 @@
   [by0 by1]
   {:pre [(= (count by0) (count by1))]}
   (->> [by0 by1]
-       (map byte/to-bits)    ;; transform into 2 8-bits sequence
+       (map byte/>bits)    ;; transform into 2 8-bits sequence
        (apply hamming-bit))) ;; compare bit to bit
 
 (m/fact
   (hamming [0 0 1] [1 0 0])                                                     => 2
-  (hamming (ascii/to-bytes "this") (ascii/to-bytes "is a test for exception"))  => (m/throws AssertionError "Assert failed: (= (count by0) (count by1))")
-  (hamming (ascii/to-bytes "this is a test") (ascii/to-bytes "wokka wokka!!!")) => 37
-  (hamming (ascii/to-bytes "this") (ascii/to-bytes "that"))                     => 4
-  (hamming (ascii/to-bytes "dude") (ascii/to-bytes "word"))                     => 10
-  (hamming (ascii/to-bytes "toned") (ascii/to-bytes "roses"))                   => 10)
+  (hamming (ascii/>bytes "this") (ascii/>bytes "is a test for exception"))  => (m/throws AssertionError "Assert failed: (= (count by0) (count by1))")
+  (hamming (ascii/>bytes "this is a test") (ascii/>bytes "wokka wokka!!!")) => 37
+  (hamming (ascii/>bytes "this") (ascii/>bytes "that"))                     => 4
+  (hamming (ascii/>bytes "dude") (ascii/>bytes "word"))                     => 10
+  (hamming (ascii/>bytes "toned") (ascii/>bytes "roses"))                   => 10)
 
 (defmethod hamming :str
   [s0 s1]
   {:pre [(= (count s0) (count s1))]}        ;; this version does not support string with different sizes
   (->> [s0 s1]
-       (map (partial mapcat ascii/to-bits)) ;; transform into 2 8-bits sequences
+       (map (partial mapcat ascii/>bits)) ;; transform into 2 8-bits sequences
        (apply hamming-bit)))                ;; compare bit to bit
 
 (m/fact

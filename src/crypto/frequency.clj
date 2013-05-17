@@ -50,7 +50,7 @@
           {}))))
 
 (m/fact
-  (compute-freq (crypto.ascii/to-bytes "hello")) => (m/just {111 (float 0.2)
+  (compute-freq (crypto.ascii/>bytes "hello")) => (m/just {111 (float 0.2)
                                                              108 (float 0.4)
                                                              101 (float 0.2)
                                                              104 (float 0.2)}))
@@ -84,7 +84,7 @@
        sum-diff-map))
 
 (m/fact
-  (compute-diff (crypto.ascii/to-bytes "hello")) => 211.0099999850989)
+  (compute-diff (crypto.ascii/>bytes "hello")) => 211.0099999850989)
 
 (defn frequency-equals
   "Compute the frequency of same characters between 2 sequence."

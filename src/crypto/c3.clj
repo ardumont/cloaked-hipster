@@ -8,7 +8,7 @@
             [crypto.base64     :as b64]
             [crypto.hex        :as hex]))
 
-(def brute-force (comp xor/decrypt-brute-force hex/to-bytes))
+(def brute-force (comp xor/decrypt-brute-force hex/>bytes))
 
 (m/fact
   (brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")

@@ -42,33 +42,33 @@
                                                                     1 1 1 1 1 1]
                                                                    []])
 
-(defn- to-base64
+(defn- >base64
   "Given a 8 or 16 or 24-bits chunk, compute the bits sequence into base64."
   [b]
   (let [[part complement] (comp24 b)
         p24               (->> part
                                (partition 6)
-                               (map (comp d/base64 binary/to-bytes)))]
+                               (map (comp d/base64 binary/>bytes)))]
     (concat p24 complement)))
 
 (m/fact
-  (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0])                           => [\/ \w]
-  (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
-  (to-base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
+  (>base64 [1 1 1 1 1 1, 1 1 0 0 0 0])                           => [\/ \w]
+  (>base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
+  (>base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
 
 (defn- encode-bytes
   "Encode bytes sequence into base64"
   [b]
   (->> b
-       byte/to-bits        ;; into 8-bits word binary sequence
+       byte/>bits        ;; into 8-bits word binary sequence
        (partition-all 24)  ;; 24-bits chunks
-       (mapcat to-base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
+       (mapcat >base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
        (s/join "")))
 
 (m/fact
-  (encode-bytes (ascii/to-bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
-  (encode-bytes (ascii/to-bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
-  (encode-bytes (ascii/to-bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
+  (encode-bytes (ascii/>bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
+  (encode-bytes (ascii/>bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
+  (encode-bytes (ascii/>bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
 
 ;; Encode into base64
 (defmulti encode "Encode ascii string or bytes sequence into base64"
@@ -79,14 +79,14 @@
   (encode-bytes b))
 
 (m/fact
-  (encode (ascii/to-bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
-  (encode (ascii/to-bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
-  (encode (ascii/to-bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
+  (encode (ascii/>bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
+  (encode (ascii/>bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
+  (encode (ascii/>bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
 
 (defmethod encode true
   [s]
   (->> s
-       ascii/to-bytes
+       ascii/>bytes
        encode-bytes))
 
 (m/fact
@@ -96,7 +96,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; decoding
 
 (def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
-  (comp binary/to-6bits d/base64-dec))
+  (comp binary/>6bits d/base64-dec))
 
 (m/fact
   (decode-b64char \a) => [0 1 1 0 1 0]
@@ -139,7 +139,7 @@
                        0 1 1 0 1 0,
                        0 1 1 0 1 1])
 
-(defn to-bits
+(defn >bits
   "Decode base64 message"
   [s]
   (->> s
@@ -148,51 +148,51 @@
        (partition 8)))
 
 (m/fact
-  (to-bits "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
-  =>  (ascii/to-bits "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
+  (>bits "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  =>  (ascii/>bits "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
 
-  (to-bits "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/to-bits "any carnal pleas")
-  (to-bits "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/to-bits "any carnal pleasu")
-  (to-bits "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/to-bits "any carnal pleasur"))
+  (>bits "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/>bits "any carnal pleas")
+  (>bits "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/>bits "any carnal pleasu")
+  (>bits "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/>bits "any carnal pleasur"))
 
-(defn to-ascii
+(defn >ascii
   "Decode base64 message"
   [s]
   (->> s
-       to-bits
-       (map binary/to-char)  ;; converted back into char
+       >bits
+       (map binary/>char)  ;; converted back into char
        (s/join "")))
 
 (m/fact
-  (to-ascii "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  (>ascii "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
   =>  "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure."
 
-  (to-ascii "YW55IGNhcm5hbCBwbGVhcw==") => "any carnal pleas"
-  (to-ascii "YW55IGNhcm5hbCBwbGVhc3U=") => "any carnal pleasu"
-  (to-ascii "YW55IGNhcm5hbCBwbGVhc3Vy") => "any carnal pleasur")
+  (>ascii "YW55IGNhcm5hbCBwbGVhcw==") => "any carnal pleas"
+  (>ascii "YW55IGNhcm5hbCBwbGVhc3U=") => "any carnal pleasu"
+  (>ascii "YW55IGNhcm5hbCBwbGVhc3Vy") => "any carnal pleasur")
 
-(defn to-bytes
+(defn >bytes
   "Decode base64 message"
   [s]
   (->> s
-       to-bits
-       (map binary/to-bytes)))
+       >bits
+       (map binary/>bytes)))
 
 (m/fact
-  (to-bytes "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
-  => (ascii/to-bytes "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
+  (>bytes "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
+  => (ascii/>bytes "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
 
-  (to-bytes "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/to-bytes "any carnal pleas")
-  (to-bytes "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/to-bytes "any carnal pleasu")
-  (to-bytes "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/to-bytes "any carnal pleasur"))
+  (>bytes "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/>bytes "any carnal pleas")
+  (>bytes "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/>bytes "any carnal pleasu")
+  (>bytes "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/>bytes "any carnal pleasur"))
 
-(defn to-hex
+(defn >hex
   "Decode a base64 encoded string into an hexadecimal string"
   [s]
   (-> s
-      to-bytes
-      byte/to-hex))
+      >bytes
+      byte/>hex))
 
 (m/fact
-  (to-hex "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
+  (>hex "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
   => "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")

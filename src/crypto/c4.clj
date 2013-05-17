@@ -13,7 +13,7 @@
   (->> words
        (map (comp
              (fn [w] [w (xor/decrypt-brute-force w)])
-             hex/to-bytes))
+             hex/>bytes))
        (filter (fn [[_ [_ decrypted-sentence] :as all]]
                  (char/sentence? decrypted-sentence)))))
 
@@ -23,7 +23,7 @@
       file/ld
       compute))
 
-(m/future-fact :future-fact-to-avoid-the-long-time-computation-just-change-future-fact-into-fact
+(m/fact :future-fact->avoid-the-long-time-computation-just-change-future-fact-in>fact
   (compute-encrypted-words "./resources/encrypted-words")
   => [[[123 90 66 21 65 93 84 65 21 65 93 80 21 69 84 71 65 76 21 92 70 21 95 64 88 69 92 91 82 63] ["5" "Now that the party is jumping\n"]]])
 

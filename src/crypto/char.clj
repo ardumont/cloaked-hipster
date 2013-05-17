@@ -5,12 +5,12 @@
             [clojure.set :as set]
             [crypto.util :as util]))
 
-(def to-hex ^{:doc "char to hex"}
-  (comp byte/to-hex int))
+(def >hex ^{:doc "char to hex"}
+  (comp byte/>hex int))
 
 (m/fact
   (->> (range 0 17)
-       (map (comp to-hex char))) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "10"])
+       (map (comp >hex char))) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "10"])
 
 (def set-chars ^{:private true
                  :doc "Set of characters to make up sentence + ponctuations character including newline"}

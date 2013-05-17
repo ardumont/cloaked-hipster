@@ -41,9 +41,9 @@ common English words, decrypt the message and find the sum of the ASCII values i
 (def ascii-decrypted (xor/decrypt {:key key-cipher
                                    :msg ascii-encrypted}))
 
-(m/future-fact
+(m/fact
   (->> ascii-decrypted
-       crypto.ascii/to-bytes
+       crypto.ascii/>bytes
        (apply +)) => 107359)
 
 (comment

@@ -15,7 +15,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;; c1
 
-;; crypto.c1> (crit/bench (hex/to-b64 "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"))
+;; crypto.c1> (crit/bench (hex/>b64 "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"))
 ;; WARNING: Final GC required 3.411904550319699 % of runtime
 ;; Evaluation count : 55020 in 60 samples of 917 calls.
 ;;              Execution time mean : 1,096743 ms
@@ -29,7 +29,7 @@
 ;;  Variance from outliers : 6,2677 % Variance is slightly inflated by outliers
 ;; nil
 
-;; crypto.bench> (time (hex/to-b64 "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"))
+;; crypto.bench> (time (hex/>b64 "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d"))
 ;; "Elapsed time: 1.388937 msecs"
 ;; "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
 

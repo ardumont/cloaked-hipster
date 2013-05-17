@@ -9,13 +9,13 @@
   [m]
   (-> m
       xor/encrypt
-      byte/to-hex))
+      byte/>hex))
 
 (defn decrypt "Decrypt the hexadecimal message using the ascii key and return the ascii message"
   [{:keys [key msg]}]
-  (-> {:key key :msg (hex/to-bytes msg)}
+  (-> {:key key :msg (hex/>bytes msg)}
       xor/decrypt
-      byte/to-ascii))
+      byte/>ascii))
 
 (m/fact
   (encrypt {:key "ICE"

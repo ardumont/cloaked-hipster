@@ -62,32 +62,32 @@
   (bin 2)   => [1 0]
   (bin 255) => [1 1 1 1 1 1 1 1])
 
-(defn to-binary
+(defn >binary
   "Given a number, compute a function permitting the translation into a n-bits words binary sequence."
   [b]
   (comp (partial comp-before b) bin))
 
 (m/fact
-  ((to-binary 8) 97) => [0 1 1 0 0 0 0 1]
-  ((to-binary 8) 2)  => [0 0 0 0 0 0 1 0])
+  ((>binary 8) 97) => [0 1 1 0 0 0 0 1]
+  ((>binary 8) 2)  => [0 0 0 0 0 0 1 0])
 
-(def to-8bits ^{:doc "Given a byte, compute its 8-bits word binary sequence."}
-  (to-binary 8))
-
-(m/fact
-  (to-8bits 97) => [0 1 1 0 0 0 0 1]
-  (to-8bits 2)  => [0 0 0 0 0 0 1 0])
-
-(def to-6bits ^{:doc "Given a byte, compute its 6-bits word binary sequence."}
-  (to-binary 6))
+(def >8bits ^{:doc "Given a byte, compute its 8-bits word binary sequence."}
+  (>binary 8))
 
 (m/fact
-  (to-6bits 26) => [0 1 1 0 1 0]
-  (to-6bits 1)  => [0 0 0 0 0 1]
-  (to-6bits 2)  => [0 0 0 0 1 0]
-  (to-6bits 3)  => [0 0 0 0 1 1])
+  (>8bits 97) => [0 1 1 0 0 0 0 1]
+  (>8bits 2)  => [0 0 0 0 0 0 1 0])
 
-(defn to-bytes
+(def >6bits ^{:doc "Given a byte, compute its 6-bits word binary sequence."}
+  (>binary 6))
+
+(m/fact
+  (>6bits 26) => [0 1 1 0 1 0]
+  (>6bits 1)  => [0 0 0 0 0 1]
+  (>6bits 2)  => [0 0 0 0 1 0]
+  (>6bits 3)  => [0 0 0 0 1 1])
+
+(defn >bytes
   "Convert a bits sequence into a number"
   [b]
   (first
@@ -97,16 +97,16 @@
     b)))
 
 (m/fact
-  (to-bytes [1 1 0 0 0 0 1])   => 97
-  (to-bytes [0 1 1 0 0 0 0 1]) => 97
-  (to-bytes [0 0 0 0 0 0 1 0]) => 2
-  (to-bytes [0 0 0 0 0 0 0 0]) => 0
-  (to-bytes [1 1 1 1 1 1 1 1]) => 255
-  (to-bytes [1 1 1 1 1 1 1 0]) => 254)
+  (>bytes [1 1 0 0 0 0 1])   => 97
+  (>bytes [0 1 1 0 0 0 0 1]) => 97
+  (>bytes [0 0 0 0 0 0 1 0]) => 2
+  (>bytes [0 0 0 0 0 0 0 0]) => 0
+  (>bytes [1 1 1 1 1 1 1 1]) => 255
+  (>bytes [1 1 1 1 1 1 1 0]) => 254)
 
-(def to-char ^{:private true
+(def >char ^{:private true
                  :doc "Convert a 8-bits sequence into a char"}
-  (comp char to-bytes))
+  (comp char >bytes))
 
 (m/fact
-  (to-char [0 1 1 0 0 0 0 1]) => \a)
+  (>char [0 1 1 0 0 0 0 1]) => \a)
