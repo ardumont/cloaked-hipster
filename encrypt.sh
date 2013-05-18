@@ -3,4 +3,3 @@
 FILES=$(cat files)
 
 lein run -m crypto.cipher/-main -E "$FILES"
-b
