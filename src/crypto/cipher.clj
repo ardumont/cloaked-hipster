@@ -63,8 +63,9 @@
   (let [[options args banner :as opts]
         (cli/cli args
              ["-h" "--help"          "Show help" :default false :flag true]
-             ["-d" "--decrypt"       "Decrypt a file"]
              ["-e" "--encrypt"       "Encrypt a file"]
+             ["-E" "--encrypt-files" "Encrypt a bunch of files"]
+             ["-d" "--decrypt"       "Decrypt a file"]
              ["-D" "--decrypt-files" "Decrypt a bunch of files"]
              ["-k" "--key-file"      "Path to the key file"])]
 
@@ -93,9 +94,18 @@
                pair
                (map (fn [v] (apply otp-decrypt-file! v)))))
 
+        (when (:encrypt-files options)
+          (println "Encrypting the files " (:encrypt-files options))
+          (let [files (-> options
+                          :encrypt-files
+                          (string/split #" "))]
+            (->> files
+                 (map otp-encrypt-file!)
+                 doall)))
         (println "done!")))))
 
 (comment
   (-main "-e" "/tmp/test.txt")
   (-main "-d" "/tmp/test-encoded.txt" "-k" "/tmp/test-key.txt")
-  (-main "-D" "/tmp/test-encode.txt:/tmp/test-key.txt /tmp/test-encode.txt:/tmp/test-key.txt"))
+  (-main "-D" "/tmp/test-encode.txt:/tmp/test-key.txt /tmp/test-encode.txt:/tmp/test-key.txt")
+  (-main "-E" "/tmp/test.txt /tmp/test.txt"))
