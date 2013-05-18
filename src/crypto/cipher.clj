@@ -92,7 +92,9 @@
           (->> options
                :decrypt-files
                pair
-               (map (fn [[file keyfile]] (otp-decrypt-file! file keyfile)))))
+               (map (fn [[file keyfile]]
+                      (otp-decrypt-file! file keyfile)))
+               doall))
 
         (when (:encrypt-files options)
           (println "Encrypting the files " (:encrypt-files options))
