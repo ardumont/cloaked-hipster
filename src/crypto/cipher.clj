@@ -92,7 +92,7 @@
           (->> options
                :decrypt-files
                pair
-               (map (fn [v] (apply otp-decrypt-file! v)))))
+               (map (fn [[file keyfile]] (otp-decrypt-file! file keyfile)))))
 
         (when (:encrypt-files options)
           (println "Encrypting the files " (:encrypt-files options))
@@ -107,5 +107,8 @@
 (comment
   (-main "-e" "/tmp/test.txt")
   (-main "-d" "/tmp/test-encoded.txt" "-k" "/tmp/test-key.txt")
-  (-main "-D" "/tmp/test-encode.txt:/tmp/test-key.txt /tmp/test-encode.txt:/tmp/test-key.txt")
-  (-main "-E" "/tmp/test.txt /tmp/test.txt"))
+  (-main "-D" "/tmp/test-encoded.txt:/tmp/test-key.txt /tmp/test-encoded.txt:/tmp/test-key.txt")
+  (-main "-E" "/tmp/test.txt /tmp/test.txt")
+  ;; lein run -m crypto.cipher/-main -E "./src/crypto/c1.clj ./src/crypto/c2.clj"
+  ;; lein run -m crypto.cipher/-main -D "./src/crypto/c1-encoded.clj:./src/crypto/c1-key.clj ./src/crypto/c2-encoded.clj:./src/crypto/c2-key.clj"
+  )
