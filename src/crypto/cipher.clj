@@ -56,12 +56,6 @@
              ["-e" "--encrypt"  "Encrypt a file"]
              ["-k" "--key-file" "the path to the key file"])]
 
-    (trace/trace options)
-
-    (trace/trace :d (:decrypt options))
-    (trace/trace :e (:encrypt options))
-    (trace/trace :k (:key-file options))
-
     (if (or (options :help)
             (and (:decrypt options) (not (:key-file options))))
       ;; problem, we display the way to use the command
