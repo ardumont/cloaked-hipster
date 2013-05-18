@@ -6,4 +6,6 @@
                  [midje                          "1.5.1"]
                  [org.clojure/math.numeric-tower "0.0.2"]
                  [incanter                       "1.4.1"]
+                 [org.clojure/tools.cli          "0.2.2"]
+                 [org.clojure/tools.trace        "0.7.3"]
                  [criterium                      "0.4.1"]])
