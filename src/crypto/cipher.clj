@@ -46,7 +46,7 @@
         key (slurp filekey)
         res (xor/decrypt {:key key
                           :msg (ascii/>bytes msg)})]
-    (spit (file/new-name filepath (str "-then-decoded")) res)))
+    (spit filepath res)))
 
 (defn- pair
   "Given a list file:file-key space separated, return a list of pair [file file-key]."
