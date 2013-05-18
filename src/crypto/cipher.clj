@@ -48,16 +48,29 @@
                           :msg (ascii/>bytes msg)})]
     (spit (file/new-name filepath (str "-then-decoded")) res)))
 
+(defn- pair
+  "Given a list file:file-key space separated, return a list of pair [file file-key]."
+  [s]
+  (->>
+   (string/split s #" ")
+   (map #(string/split % #":"))))
+
+(m/fact
+  (pair  "/tmp/test-encode.txt:/tmp/test-key.txt /tmp/test-encode.txt:/tmp/test-key.txt") => [["/tmp/test-encode.txt" "/tmp/test-key.txt"]
+                                                                                              ["/tmp/test-encode.txt" "/tmp/test-key.txt"]])
+
 (defn -main [& args]
   (let [[options args banner :as opts]
         (cli/cli args
-             ["-h" "--help"     "Show help" :default false :flag true]
-             ["-d" "--decrypt"  "Decrypt a file"]
-             ["-e" "--encrypt"  "Encrypt a file"]
-             ["-k" "--key-file" "the path to the key file"])]
+             ["-h" "--help"          "Show help" :default false :flag true]
+             ["-d" "--decrypt"       "Decrypt a file"]
+             ["-e" "--encrypt"       "Encrypt a file"]
+             ["-D" "--decrypt-files" "Decrypt a bunch of files"]
+             ["-k" "--key-file"      "Path to the key file"])]
 
     (if (or (options :help)
             (and (:decrypt options) (not (:key-file options))))
+
       ;; problem, we display the way to use the command
       (println banner)
 
@@ -73,8 +86,16 @@
           (println "Encrypting file " (:encrypt :options))
           (-> options :encrypt otp-encrypt-file!))
 
+        (when (:decrypt-files options)
+          (println "Decrypting the files " (:decrypt-files options))
+          (->> options
+               :decrypt-files
+               pair
+               (map (fn [v] (apply otp-decrypt-file! v)))))
+
         (println "done!")))))
 
 (comment
   (-main "-e" "/tmp/test.txt")
-  (-main "-d" "/tmp/test-encoded.txt" "-k" "/tmp/test-key.txt"))
+  (-main "-d" "/tmp/test-encoded.txt" "-k" "/tmp/test-key.txt")
+  (-main "-D" "/tmp/test-encode.txt:/tmp/test-key.txt /tmp/test-encode.txt:/tmp/test-key.txt"))
