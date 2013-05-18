@@ -65,3 +65,15 @@
 (m/fact
   (map >hex (range 0 20)) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "10" "11" "12" "13"]
   (>hex (range 0 20))     => "000102030405060708090a0b0c0d0e0f10111213")
+
+(defn rand-bytes
+  "Generate a random list of unsigned bytes."
+  [size]
+  (let [rand (java.security.SecureRandom/getInstance "SHA1PRNG")
+        buffer (make-array Byte/TYPE size)]
+    (.nextBytes rand buffer)
+    (map #(+ 128 %) buffer)))
+
+(m/fact
+  (apply max (rand-bytes 100)) => #(<= % 255)
+  (rand-bytes 100)             => #(every? true? (map (fn [e] (<= 0 e)) %)))
