@@ -36,7 +36,7 @@
         m (byte/>ascii msg)
         fname (-> filepath io/file .getPath)]
     (do
-      (spit (file/new-name fname (str "-encoded")) m)
+      (spit fname m)
       (spit (file/new-name fname (str "-key")) k))))
 
 (defn otp-decrypt-file!
