@@ -1,11 +1,12 @@
 (ns crypto.xor
   "xor computations"
-  (:require [midje.sweet      :as m]
-            [crypto.hex       :as hex]
-            [crypto.binary    :as binary]
-            [crypto.frequency :as frequency]
-            [crypto.byte      :as byte]
-            [crypto.ascii     :as ascii]))
+  (:require [midje.sweet :as m]
+            [crypto
+             [hex        :as hex]
+             [binary     :as binary]
+             [frequency  :as frequency]
+             [byte       :as byte]
+             [ascii      :as ascii]]))
 
 (defn bitxor
   "Apply bit-xor to the seq using key as the key"
