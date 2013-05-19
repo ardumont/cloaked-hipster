@@ -4,10 +4,7 @@
             [clojure.java.io     :as io]
             [clojure.string      :as string]
             [crypto
-             [hex                :as hex]
              [base64             :as b64]
-             [binary             :as binary]
-             [frequency          :as frequency]
              [byte               :as byte]
              [xor                :as xor]
              [file               :as file]
@@ -44,7 +41,7 @@
 (defn decrypt-file!
   "Given a file with one-time pad encoded, this will find the key file and decipher the file."
   [filepath filekey]
-  (let [msg (-> filepath slurp b64/bytes)
-        key (-> filekey slurp b64/ascii)]
+  (let [msg (-> filepath slurp b64/>bytes)
+        key (-> filekey slurp b64/>ascii)]
     (spit filepath (decrypt {:key key
                              :msg msg}))))
