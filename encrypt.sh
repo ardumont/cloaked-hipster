@@ -2,4 +2,8 @@
 
 FILES=$(cat files)
 
-lein run -m crypto.cipher/-main -E "$FILES"
+set +e
+
+ls ./src/crypto/c*-key.clj
+
+[ $? -ne 0 ] && set -e && echo "Encrypt using one-time pad." && lein run -m crypto.cipher/-main -E "$FILES" || echo "Already encrypted, do nothing."
