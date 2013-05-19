@@ -1,15 +1,1 @@
-(ns crypto.c3
-  "Single-character XOR Cipher. Find the key and decrypt the message."
-  (:require [midje.sweet       :as m]
-            [crypto.xor        :as xor]
-            [crypto.byte       :as byte]
-            [crypto.binary     :as binary]
-            [crypto.ascii      :as ascii]
-            [crypto.base64     :as b64]
-            [crypto.hex        :as hex]))
-
-(def brute-force (comp xor/decrypt-brute-force hex/>bytes))
-
-(m/fact
-  (brute-force "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
-  => ["X" "Cooking MC's like a pound of bacon"])
+9so3lNZNiRTS8SIZTZDHGPy+aSllPf2W2X5cwfHR4yGf1uCysJQYEBlbDy4typytzYWgr50hVaMRGbI1Kz94fc6GyES/4dQF7ZLj2zjCI4bmz3nZk6xa49tW3ZPnwnqJEQWW+2srkCkB59OKazOCOWUFtJH5z0leyoTJvKu4P3TANZp6i1o3xgCZrjaTOs85U/BZIxz9Tah+0GuiqZSIk5yC7Mkm408nqkQt30owKojwz2glyW4wn0j5U3fOLlX1uDb6/hEC1JWUgmUN5r98+N19AE3bEKrpKaMxBeQlLlzsvwzSat6idDYVcjan/JWCGAV5fAQ8lnC9QmJKUmkBVm+Lj99v0HuYRelu2SjKPccxvpd459Vbhh2+mfcTlEX/SgeLOdjCMqYDjoGKvz7fHeUgZAAhjOTAvtS20SGi91JDvunKnGwkdPVb/ZJiS4YU3X52xSy8SE90gbJpF9/gTsjwVZ3t+XzPr/mk/OyKzW+Y1B2Ei9SnVsVm1lOUPZVSvZtX5JTw/Pc5uP28u8LGNQ2x+RwBAIVGZaB69sILPeCsZ/IlP/Rk/bszMy80lByqF0HMdz6+MUXYQ4fJ9ZOWSvOxLPgRLrAAmQs+fEuVkCATZRw4EsYgZmNmMxMmLt8csPu3U1bFGYn6G3z7h7I5lP/3SPgdGy7eS307EZ9e/jUeqeUi8EZ0a3kWQ+Vw8BSvsUH1Rn/fU5xGvOKSTaYNT2ejv42JtOQ6mE9SuLNYQc7JhXDPYF72vCtdy5FUc8LZqw==

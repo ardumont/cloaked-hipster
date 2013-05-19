@@ -1,18 +1,1 @@
-(ns crypto.c2
-  "XOR 2 equal-length hex-encoded buffers."
-  (:require [midje.sweet :as m]
-            [crypto.xor  :as xor]
-            [crypto.hex  :as hex]
-            [crypto.byte :as byte]))
-
-(defn xor
-  "Given a hex msg and a hex key, encode the msg with the key using xor"
-  [msg key]
-  (->> [msg key]
-       (map hex/>bytes)
-       (apply xor/xor)
-       byte/>hex))
-
-(m/fact
-  (xor "1c0111001f010100061a024b53535009181c" "686974207468652062756c6c277320657965") => "746865206b696420646f6e277420706c6179"
-  (xor "746865206b696420646f6e277420706c6179" "686974207468652062756c6c277320657965") => "1c0111001f010100061a024b53535009181c")
+BUPfXdqMhbKTUJrGgcXhQX6n6k1AxigyUjugc6TlWeDXhJ3rXMwScTsOA4Y8rRu41RVf0agL/54paf98jfmIGGS2Hq7iiFVZPHMIy3fGVYcpBcuODE7dyRD5Et6M/iMI6Y7DM1EzPlZrJFwNCwQK1/w/3fJTEzZGAUv4KURGpspb1qpnxvfmZ4Uncc4aPYMjGzMzeQIJ5CFg6bwN9fTAO+1tH7aAnFpOPu96tzYzoYBhyGfB55Uq61spXgV/EFVA/2IzpdwS8Xt2aKFEhRyQZE6/A6B8v0kNCEepLJPloQ5t9ysvzh+4QcECroBy+mimFDkibmLIwTXHaeUc1CZWPR0N38Djvl0trFtsSB0m+xl8VkQW5Bgc73gBTRFHRotFrakoVjYscqNlPB8PSTVs7ZR0PSD6x20DWZTJVrH3TyvPjL2OLuvJFZOOQ0IGwOrR7VaTCrBuD4xZ4zHw32WKPhKZ0pkVphzW2nW/0YdsL6whL6B/38cl1EqgLmMEuXk8HLSpsQvd8KJpgP1uL9671B5/74zp+XJXSxAYz0jLehx4W3wfQuZsH7LHDn4A2fvlfnvHpvo+nmTE9TucFtDPiOU8G9RwLetTtTtDcYDPgBgS/4T5TmHtRwnbSlCCnjNveetGCQsnNwZkK5NBDgjbVkrV7ESvpkssw1RbFNfIC/vKeTvqfmFN0/5eEgBd5/t2iJQlNPr+H/IAX76IwF165XyZqUeL3pkkIQOugkyXZxg0WdWxmpsC6Lb30DmlR9GFVib99FkmUrg1eKYxmjucMiXkqtnNgYcPf9X2uLnw2NLvRyx4mQ87y7HfkZk0/LHukV5nrNVV4f3BeMCWVNIRVA==

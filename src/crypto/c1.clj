@@ -1,15 +1,1 @@
-(ns crypto.c1
-  "hex to base64, base64 to hex."
-  (:require [midje.sweet :as m]
-            [crypto
-             [byte       :as b]
-             [hex        :as hex]
-             [base64     :as b64]]))
-
-(m/fact
-  (hex/>b64 "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")
-  => "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
-
-(m/fact
-  (b64/>hex "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t")
-  => "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d")
+VP597LMpduc/8v6RkGm0wejcV9T0NqVozbJEi+VzYIytfjwNsj+jPFi80VOZOp/eHKQs7cULFi5LffQNL/Gt2xBmzVdjKB4G7qVoaDRqGkSaZYMI15t7/gaAOpp4aR8Ehl+uypj5p8aYY5UiI/OmUslF3rHOIbrPlkmczkICPlxvMNdxykTY/XuPK+zxxGB2P0gDZNkxqhVI0LKe86jd+LKMVGZsFvorI0+qr/YGPKk2ww+AYd/hdqbrSVvrSTIMQlV1kOiJYG0/zy/r/Ow5/OIFqNL877IzvUquHRjhBgTlQMeVWwAK9kTB9uqTjKDz1fFCalJT/bMAZaCc5ETjAwR+EkzOq4tlskpWBvqffnikUSj3Sb6hk0zEmkukpU+SC8H4UJz0iX8oR2EMajArVZqbLRVcUy0gMsfA072UDvaFFz+8DI5sLlSDvVQaFpbwNmQFxenJ42vgCMO4wFLOO6liK5BtH/PO5YfSMhQkSN8DCMSLLO/LPbbNDZn+qa8DoIBkwQL9U8ZnRoTu0VGKW2KhZ5EcHNttlbvJbwKd6Td1Z6HP7BjS/IvF8K3GWRyhxqFLjfmY83zW6hC0TchtvO0zS1gWONbPqO/e+xOkM/UYP6OOn+qfBF53JtpE88EeMqzGSgEWFV8bVY1cI3vuDEsH/E3Y//+mNZl/7cX9UehrXgsBakgAD4ir/5UsfQo56+I3zkB4xPOaZmX/4eS+kHQ96p7SeRm+XiPbDv+nqsPFRsQ/AVtS3bH1r7E4KHC76Z+cLaHdB5jKxNr9X714
