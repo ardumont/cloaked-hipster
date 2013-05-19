@@ -80,3 +80,8 @@
 (m/fact
   (apply max (rand-bytes 100)) => #(<= % 255)
   (rand-bytes 100)             => #(every? true? (map (fn [e] (<= 0 e)) %)))
+
+;; (def >b64 b64/encode)
+
+;; (m/fact
+;;   (>b64 (ascii/>bytes "this is a test")) => "dGhpcyBpcyBhIHRlc3Q=")
