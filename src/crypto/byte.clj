@@ -1,8 +1,11 @@
 (ns crypto.byte
   "Bytes manipulation namespace"
   (:require [midje.sweet    :as m]
-            [clojure.string :as s]
-            [crypto.binary  :as binary]
+            [crypto
+             [binary        :as binary]
+             ;; [base64        :as b64]
+             ;; [ascii         :as ascii]
+             ]
             [clojure.string :as string]))
 
 (defn >signed-byte
@@ -31,7 +34,7 @@
   [b]
   (->> b
        (map char)
-       (s/join "")))
+       (string/join "")))
 
 (m/fact
   (>ascii [99 108 111 106 117 114 101 32 114 111 99 107 115 33]) => "clojure rocks!")
@@ -60,7 +63,7 @@
 (defmethod >hex :num          [b] (format "%x" b))
 (defmethod >hex :default      [b] (->> b
                                          (map >hex)
-                                         (s/join "")))
+                                         (string/join "")))
 
 (m/fact
   (map >hex (range 0 20)) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "10" "11" "12" "13"]
