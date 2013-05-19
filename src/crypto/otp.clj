@@ -5,6 +5,7 @@
             [clojure.string      :as string]
             [crypto
              [hex                :as hex]
+             [base64             :as b64]
              [binary             :as binary]
              [frequency          :as frequency]
              [byte               :as byte]
@@ -28,13 +29,13 @@
    (encrypt "may the repl be with you")) => "may the repl be with you")
 
 (defn encrypt-file!
-  "One-time pad with a ascii file. This will generate a file encoded with a one-time pad and another one with the key."
+  "One-time pad with a ascii file. This will generate 1 file encrypted with a one-time pad encoded in base64 and another one with the key encoded in base64."
   [filepath]
   (let [{:keys [key msg]} (-> filepath
                               slurp
                               encrypt)
-        k (byte/>ascii key)
-        m (byte/>ascii msg)
+        k (byte/>b64 key)
+        m (byte/>b64 msg)
         fname (-> filepath io/file .getPath)]
     (do
       (spit fname m)
@@ -43,8 +44,7 @@
 (defn decrypt-file!
   "Given a file with one-time pad encoded, this will find the key file and decipher the file."
   [filepath filekey]
-  (let [msg (slurp filepath)
-        key (slurp filekey)
-        res (decrypt {:key key
-                      :msg (ascii/>bytes msg)})]
-    (spit filepath res)))
+  (let [msg (-> filepath slurp b64/bytes)
+        key (-> filekey slurp b64/ascii)]
+    (spit filepath (decrypt {:key key
+                             :msg msg}))))
