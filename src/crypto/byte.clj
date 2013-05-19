@@ -2,10 +2,7 @@
   "Bytes manipulation namespace"
   (:require [midje.sweet    :as m]
             [crypto
-             [binary        :as binary]
-             ;; [base64        :as b64]
-             ;; [ascii         :as ascii]
-             ]
+             [binary        :as binary]]
             [clojure.string :as string]))
 
 (defn >signed-byte
@@ -44,13 +41,13 @@
 
 (m/fact
   (>bits [0 1 2])    => [0 0 0 0 0 0 0 0,
-                           0 0 0 0 0 0 0 1,
-                           0 0 0 0 0 0 1 0]
+                         0 0 0 0 0 0 0 1,
+                         0 0 0 0 0 0 1 0]
   (>bits [97 98 99]) => [0 1 1 0 0 0 0 1,
-                           0 1 1 0 0 0 1 0,
-                           0 1 1 0 0 0 1 1]
+                         0 1 1 0 0 0 1 0,
+                         0 1 1 0 0 0 1 1]
   (>bits [104 97])   => [0 1 1 0 1 0 0 0,
-                           0 1 1 0 0 0 0 1])
+                         0 1 1 0 0 0 0 1])
 
 (defmulti >hex "byte to hexadecimal, beware, we want 2 characters even for number strictly under 16"
   (fn [b]
@@ -62,8 +59,8 @@
 (defmethod >hex :num-special  [b] (format "0%x" b));; we prefix the numbers strictly under 16 so that we have a 2 string representation
 (defmethod >hex :num          [b] (format "%x" b))
 (defmethod >hex :default      [b] (->> b
-                                         (map >hex)
-                                         (string/join "")))
+                                       (map >hex)
+                                       (string/join "")))
 
 (m/fact
   (map >hex (range 0 20)) => ["00" "01" "02" "03" "04" "05" "06" "07" "08" "09" "0a" "0b" "0c" "0d" "0e" "0f" "10" "11" "12" "13"]
@@ -81,7 +78,17 @@
   (apply max (rand-bytes 100)) => #(<= % 255)
   (rand-bytes 100)             => #(every? true? (map (fn [e] (<= 0 e)) %)))
 
-;; (def >b64 b64/encode)
+(defn >b64
+  "Encode bytes sequence into base64"
+  [b]
+  (->> b
+       >bits                ;; into 8-bits word binary sequence
+       (partition-all 24)   ;; 24-bits chunks
+       (mapcat binary/>b64) ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
+       (string/join "")))
 
-;; (m/fact
-;;   (>b64 (ascii/>bytes "this is a test")) => "dGhpcyBpcyBhIHRlc3Q=")
+(m/fact
+  (>b64 [97 110 121 32 99 97 114 110 97 108 32 112 108 101 97 115])         => "YW55IGNhcm5hbCBwbGVhcw=="
+  (>b64 [97 110 121 32 99 97 114 110 97 108 32 112 108 101 97 115 117])     => "YW55IGNhcm5hbCBwbGVhc3U="
+  (>b64 [97 110 121 32 99 97 114 110 97 108 32 112 108 101 97 115 117 114]) => "YW55IGNhcm5hbCBwbGVhc3Vy"
+  (>b64 [116 104 105 115 32 105 115 32 97 32 116 101 115 116])              => "dGhpcyBpcyBhIHRlc3Q=")

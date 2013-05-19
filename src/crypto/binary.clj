@@ -1,6 +1,7 @@
 (ns crypto.binary
   "A binary namespace to deal with transformation into binary"
-  (:require [midje.sweet :as m]))
+  (:require [midje.sweet :as m]
+            [crypto.dico :as dico]))
 
 ;; bits sequence are read from the left to the right (big endian)
 ;; significant first, least significant
@@ -110,3 +111,49 @@
 
 (m/fact
   (>char [0 1 1 0 0 0 0 1]) => \a)
+
+;; Given a partition of 24 bits, compute the complement [partition of multiple 6 bits, list of complement = char]
+(defmulti comp24 count)
+
+;; complement 4 bits to be able to have 2 bytes (12 bits) and we complements with 2 = chars
+(defmethod comp24 8 [b] [(comp-after 12 b)
+                         [\= \=]])
+
+(m/fact
+  (comp24 [1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
+                                  1 1 0 0 0 0]
+                                 [\= \=]])
+
+;; complement 2 bits to be able to have 3 bytes (18 bits) and we complements with 1 = char
+(defmethod comp24 16 [b] [(comp-after 18 b)
+                          [\=]])
+
+(m/fact
+  (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1]) => [[1 1 1 1 1 1,
+                                                   1 1 0 0 0 0,
+                                                   0 0 1 1 0 0]
+                                                  [\=]])
+
+;; chunk of 24 remains the same without any complement
+(defmethod comp24 :default [b] [b []])
+
+(m/fact
+  (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1, 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
+                                                                    1 1 0 0 0 0,
+                                                                    0 0 1 1 1 1,
+                                                                    1 1 1 1 1 1]
+                                                                   []])
+
+(defn >b64
+  "Given a 8 or 16 or 24-bits chunk, compute the bits sequence into base64."
+  [b]
+  (let [[part complement] (comp24 b)
+        p24               (->> part
+                               (partition 6)
+                               (map (comp dico/base64 >bytes)))]
+    (concat p24 complement)))
+
+(m/fact
+  (>b64 [1 1 1 1 1 1, 1 1 0 0 0 0])                           => [\/ \w]
+  (>b64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
+  (>b64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])

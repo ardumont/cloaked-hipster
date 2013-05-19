@@ -2,101 +2,15 @@
   "encode and decode a string in base64"
   (:require [midje.sweet    :as m]
             [crypto
-             [dico          :as d]
-             [binary        :as binary]
+             [dico          :as dico]
              [byte          :as byte]
-             [ascii         :as ascii]]
+             [binary        :as binary]]
             [clojure.string :as s]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; encoding
-
-;; Given a partition of 24 bits, compute the complement [partition of multiple 6 bits, list of complement = char]
-(defmulti comp24 count)
-
-;; complement 4 bits to be able to have 2 bytes (12 bits) and we complements with 2 = chars
-(defmethod comp24 8 [b] [(binary/comp-after 12 b)
-                         [\= \=]])
-
-(m/fact
-  (comp24 [1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
-                                  1 1 0 0 0 0]
-                                 [\= \=]])
-
-;; complement 2 bits to be able to have 3 bytes (18 bits) and we complements with 1 = char
-(defmethod comp24 16 [b] [(binary/comp-after 18 b)
-                          [\=]])
-
-(m/fact
-  (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1]) => [[1 1 1 1 1 1,
-                                                   1 1 0 0 0 0,
-                                                   0 0 1 1 0 0]
-                                                  [\=]])
-
-;; chunk of 24 remains the same without any complement
-(defmethod comp24 :default [b] [b []])
-
-(m/fact
-  (comp24 [1 1 1 1 1 1 1 1, 0 0 0 0 0 0 1 1, 1 1 1 1 1 1 1 1]) => [[1 1 1 1 1 1,
-                                                                    1 1 0 0 0 0,
-                                                                    0 0 1 1 1 1,
-                                                                    1 1 1 1 1 1]
-                                                                   []])
-
-(defn- >base64
-  "Given a 8 or 16 or 24-bits chunk, compute the bits sequence into base64."
-  [b]
-  (let [[part complement] (comp24 b)
-        p24               (->> part
-                               (partition 6)
-                               (map (comp d/base64 binary/>bytes)))]
-    (concat p24 complement)))
-
-(m/fact
-  (>base64 [1 1 1 1 1 1, 1 1 0 0 0 0])                           => [\/ \w]
-  (>base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 0 0])              => [\/ \w \M]
-  (>base64 [1 1 1 1 1 1, 1 1 0 0 0 0, 0 0 1 1 1 1, 1 1 1 1 1 1]) => [\/ \w \P \/])
-
-(defn- encode-bytes
-  "Encode bytes sequence into base64"
-  [b]
-  (->> b
-       byte/>bits        ;; into 8-bits word binary sequence
-       (partition-all 24)  ;; 24-bits chunks
-       (mapcat >base64)  ;; deal with the last chunk of bits (which can be of size 8, 16 or 24)
-       (s/join "")))
-
-(m/fact
-  (encode-bytes (ascii/>bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
-  (encode-bytes (ascii/>bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
-  (encode-bytes (ascii/>bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
-
-;; Encode into base64
-(defmulti encode "Encode ascii string or bytes sequence into base64"
-  string?)
-
-(defmethod encode false
-  [b]
-  (encode-bytes b))
-
-(m/fact
-  (encode (ascii/>bytes "any carnal pleas"))   => "YW55IGNhcm5hbCBwbGVhcw=="
-  (encode (ascii/>bytes "any carnal pleasu"))  => "YW55IGNhcm5hbCBwbGVhc3U="
-  (encode (ascii/>bytes "any carnal pleasur")) => "YW55IGNhcm5hbCBwbGVhc3Vy")
-
-(defmethod encode true
-  [s]
-  (->> s
-       ascii/>bytes
-       encode-bytes))
-
-(m/fact
-  (encode "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
-  => "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;; decoding
 
 (def decode-b64char ^{:doc "Decode a 8-bit base64 representation into a 6-bits representation."}
-  (comp binary/>6bits d/base64-dec))
+  (comp binary/>6bits dico/base64-dec))
 
 (m/fact
   (decode-b64char \a) => [0 1 1 0 1 0]
@@ -148,12 +62,9 @@
        (partition 8)))
 
 (m/fact
-  (>bits "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
-  =>  (ascii/>bits "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
-
-  (>bits "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/>bits "any carnal pleas")
-  (>bits "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/>bits "any carnal pleasu")
-  (>bits "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/>bits "any carnal pleasur"))
+  (>bits "YW55IGNhcm5hbCBwbGVhcw==") => '((0 1 1 0 0 0 0 1) (0 1 1 0 1 1 1 0) (0 1 1 1 1 0 0 1) (0 0 1 0 0 0 0 0) (0 1 1 0 0 0 1 1) (0 1 1 0 0 0 0 1) (0 1 1 1 0 0 1 0) (0 1 1 0 1 1 1 0) (0 1 1 0 0 0 0 1) (0 1 1 0 1 1 0 0) (0 0 1 0 0 0 0 0) (0 1 1 1 0 0 0 0) (0 1 1 0 1 1 0 0) (0 1 1 0 0 1 0 1) (0 1 1 0 0 0 0 1) (0 1 1 1 0 0 1 1))
+  (>bits "YW55IGNhcm5hbCBwbGVhc3U=") => '((0 1 1 0 0 0 0 1) (0 1 1 0 1 1 1 0) (0 1 1 1 1 0 0 1) (0 0 1 0 0 0 0 0) (0 1 1 0 0 0 1 1) (0 1 1 0 0 0 0 1) (0 1 1 1 0 0 1 0) (0 1 1 0 1 1 1 0) (0 1 1 0 0 0 0 1) (0 1 1 0 1 1 0 0) (0 0 1 0 0 0 0 0) (0 1 1 1 0 0 0 0) (0 1 1 0 1 1 0 0) (0 1 1 0 0 1 0 1) (0 1 1 0 0 0 0 1) (0 1 1 1 0 0 1 1) (0 1 1 1 0 1 0 1))
+  (>bits "YW55IGNhcm5hbCBwbGVhc3Vy") => '((0 1 1 0 0 0 0 1) (0 1 1 0 1 1 1 0) (0 1 1 1 1 0 0 1) (0 0 1 0 0 0 0 0) (0 1 1 0 0 0 1 1) (0 1 1 0 0 0 0 1) (0 1 1 1 0 0 1 0) (0 1 1 0 1 1 1 0) (0 1 1 0 0 0 0 1) (0 1 1 0 1 1 0 0) (0 0 1 0 0 0 0 0) (0 1 1 1 0 0 0 0) (0 1 1 0 1 1 0 0) (0 1 1 0 0 1 0 1) (0 1 1 0 0 0 0 1) (0 1 1 1 0 0 1 1) (0 1 1 1 0 1 0 1) (0 1 1 1 0 0 1 0)))
 
 (defn >ascii
   "Decode base64 message"
@@ -179,12 +90,9 @@
        (map binary/>bytes)))
 
 (m/fact
-  (>bytes "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFuY2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxlIGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhlbWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4=")
-  => (ascii/>bytes "Man is distinguished, not only by his reason, but by this singular passion from other animals, which is a lust of the mind, that by a perseverance of delight in the continued and indefatigable generation of knowledge, exceeds the short vehemence of any carnal pleasure.")
-
-  (>bytes "YW55IGNhcm5hbCBwbGVhcw==") => (ascii/>bytes "any carnal pleas")
-  (>bytes "YW55IGNhcm5hbCBwbGVhc3U=") => (ascii/>bytes "any carnal pleasu")
-  (>bytes "YW55IGNhcm5hbCBwbGVhc3Vy") => (ascii/>bytes "any carnal pleasur"))
+  (>bytes "YW55IGNhcm5hbCBwbGVhcw==") => '(97 110 121 32 99 97 114 110 97 108 32 112 108 101 97 115)
+  (>bytes "YW55IGNhcm5hbCBwbGVhc3U=") => '(97 110 121 32 99 97 114 110 97 108 32 112 108 101 97 115 117)
+  (>bytes "YW55IGNhcm5hbCBwbGVhc3Vy") => '(97 110 121 32 99 97 114 110 97 108 32 112 108 101 97 115 117 114))
 
 (defn >hex
   "Decode a base64 encoded string into an hexadecimal string"
